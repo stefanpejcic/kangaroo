@@ -1,5 +1,7 @@
 #!/bin/bash
 
+trap '' SIGINT SIGTERM SIGTSTP
+
 # Path to SSH config
 ssh_config="$HOME/.ssh/config"
 
