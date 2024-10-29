@@ -1,25 +1,26 @@
 #!/bin/bash
 
-# Path to the server list
-server_list="/etc/server_list"
+# Path to SSH config
+ssh_config="$HOME/.ssh/config"
 
+# Extract the host names and descriptions from the SSH config
+available_servers=$(awk '/^Host / {host=$2} /^# Description: / {desc=$3} host {print host " - " desc; host=""}' "$ssh_config")
+
+# Prompt user to select a server using fzf
 while true; do
-    echo "Available Servers:"
+    server_selection=$(echo "$available_servers" | fzf --prompt="Select a server: ")
 
-    # Load server list and format it for fzf
-    server_selection=$(awk '{print $1 " - " $2 " (" $3 ")"}' "$server_list" | fzf --prompt="Select a server: ")
-
-    # If the user presses Esc or Ctrl+C in fzf, it will exit
+    # If the user presses Esc or Ctrl+C in fzf, exit
     if [[ -z "$server_selection" ]]; then
         echo "Exiting..."
         exit 0
     fi
 
-    # Extract server name and IP from the selection
+    # Extract server name from selection
     server_name=$(echo "$server_selection" | awk '{print $1}')
-    server_ip=$(grep "^$server_name" "$server_list" | awk '{print $2}')
 
-    echo "Connecting to $server_name ($server_ip)..."
-    ssh "$server_ip"
+    # Connect to the selected server
+    echo "Connecting to $server_name..."
+    ssh "$server_name"
     echo -e "\nDisconnected from $server_name. Returning to server selection..."
 done
