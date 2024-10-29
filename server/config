@@ -1,0 +1,18 @@
+Host webserver1
+    HostName 192.168.1.10
+    User <username>
+    IdentityFile ~/.ssh/jumpserver_key
+    CertificateFile ~/.ssh/jumpserver_key-cert.pub
+
+Host dbserver1
+    HostName 192.168.1.20
+    User <username>
+    IdentityFile ~/.ssh/jumpserver_key
+    CertificateFile ~/.ssh/jumpserver_key-cert.pub
+
+Host fileserver1
+    HostName 192.168.1.30
+    User <username>
+    IdentityFile ~/.ssh/jumpserver_key
+    CertificateFile ~/.ssh/jumpserver_key-cert.pub
+  
