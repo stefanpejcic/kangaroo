@@ -8,11 +8,10 @@ fi
 
 # Define variables
 CA_KEY="/etc/ssh/ca_key"
-CA_CERT="/etc/ssh/ca_cert.pub"
 CONFIG_FILE="/etc/jump_servers.conf"
 
 # Ensure the CA keys exist
-if [ ! -f "$CA_KEY" ] || [ ! -f "$CA_CERT" ]; then
+if [ ! -f "$CA_KEY" ]; then
     echo "SSH Certificate Authority keys not found. Generating..."
     ssh-keygen -f $CA_KEY -C "Kangaroo CA" -N ""
     #exit 1
