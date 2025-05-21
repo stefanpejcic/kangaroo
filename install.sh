@@ -32,8 +32,10 @@ Match User *,!root
     ForceCommand ${SCRIPT_DIR}/server/client.sh
 EOF
 
+clear
 echo "Restarting SSH service.."
 sudo systemctl restart ssh
+clear
 fi
 
 
