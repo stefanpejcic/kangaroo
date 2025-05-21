@@ -15,6 +15,7 @@ server_ip=""
 ssh_user="root" #maybe?
 ssh_port=22
 ssh_password=""
+selected_users=""
 
 # Parse long options
 for arg in "$@"; do
@@ -41,6 +42,10 @@ for arg in "$@"; do
       ;;
     --password=*)
       ssh_password="${arg#*=}"
+      shift
+      ;;
+    --users=*)
+      selected_users="${arg#*=}"
       shift
       ;;
     *)
@@ -130,8 +135,10 @@ fi
 # Function to set up SSH certificate-based authentication for existing users
 setup_ssh_access() {
     local user=$1
-    local authorized_keys_file="/home/$user/.ssh/authorized_keys"
-    local user_ssh_config="/home/$user/.ssh/config"
+    local authorized_keys_dir="/home/$user/.ssh"
+    mkdir -p $authorized_keys_dir
+    local authorized_keys_file="/$authorized_keys_dir/authorized_keys"
+    local user_ssh_config="/$authorized_keys_dir/.ssh/config"
     if [ -f "$cert_file" ]; then
         echo "Setting up SSH access for user $user..."
         echo "command=\"ssh -i $cert_file -p $ssh_port $ssh_user@$server_ip\" $cert_file" >> "$authorized_keys_file"
@@ -156,25 +163,39 @@ setup_ssh_access() {
     fi
 }
 
-# Set up SSH access for all existing users or specified users
-read -p "Do you want to set up SSH access for all existing users? (y/n): " add_to_all
 
-# Get existing users
-existing_users=$(awk -F: '($7 == "/bin/bash" || $7 == "/bin/sh") {print $1}' /etc/passwd)
+setup_for_all_users() {
+   existing_users=$(awk -F: '($7 == "/bin/bash" || $7 == "/bin/sh") {print $1}' /etc/passwd)
+       for user in $existing_users; do
+           setup_ssh_access "$user"
+       done
+}
 
-if [[ "$add_to_all" =~ ^[Yy]$ ]]; then
-    for user in $existing_users; do
-        setup_ssh_access "$user"
-    done
-else
-    read -p "Enter the usernames to setup SSH access for (space-separated): " specific_users
-    for user in $specific_users; do
-        if id "$user" &>/dev/null; then
+setup_for_some_users() {
+   users="$1"
+   for user in $users; do
+         if id "$user" &>/dev/null; then
             setup_ssh_access "$user"
-        else
+         else
             echo "User $user does not exist."
-        fi
-    done
-fi
+         fi
+   done
+}
 
-echo "Server $server_name ($server_ip:$ssh_port) added, and SSH access configured using certificates from JumpServer."
+# Set up SSH access for all existing users or specified users
+if [[ -z "$selected_users" ]]; then
+   read -p "Do you want to set up SSH access for all existing users? (y/n): " add_to_all
+   if [[ "$add_to_all" =~ ^[Yy]$ ]]; then
+      setup_for_all_users
+   else
+       read -p "Enter the usernames to setup SSH access for (space-separated): " specific_users
+       setup_for_some_users "$specific_users"
+   fi
+else
+   if [[ "$selected_users" == "all" ]]; then
+      setup_for_all_users
+   else
+      setup_for_some_users "$selected_users"
+   fi
+fi
+echo "Server $server_name ($server_ip:$ssh_port) added, and SSH access configured using certificates from Kangaroo 🦘"
