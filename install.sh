@@ -11,7 +11,7 @@ if ! grep -q 'Kangaroo SSH JumpServer' /etc/ssh/sshd_config; then
 PubkeyAuthentication yes
 AuthorizedKeysFile .ssh/authorized_keys
 Match User *,!root
-    ForceCommand /kangaroo.sh
+    ForceCommand %h/kangaroo.sh
 EOF
 fi
 
