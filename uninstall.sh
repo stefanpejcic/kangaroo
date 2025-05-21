@@ -45,7 +45,7 @@ remove_for_all_users() {
        for user in $existing_users; do
           if [ "$user" != "root" ]; then
             ssh_dir="$(eval echo ~$user)/.ssh" 
-            rm -rf "$ssh_dir/authorized_keys" "$ssh_dir/jumpserver_key"
+            rm -rf "$ssh_dir/authorized_keys" "$ssh_dir/jumpserver_key" "$ssh_dir/config"
           fi
        done
 }
