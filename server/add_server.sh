@@ -110,7 +110,13 @@ fi
 
 
 # run!
-echo "$USERPASS" | sshpass ssh-copy-id -p "$ssh_port" -oStrictHostKeyChecking=no -f -i $cert_file "$ssh_user"@"$server_ip"
+echo "$USERPASS" | sshpass ssh-copy-id -p "$ssh_port" -o StrictHostKeyChecking=no -f -i "$cert_file" "$ssh_user@$server_ip" >/dev/null 2>&1
+
+if [ $? -ne 0 ]; then
+    echo "Error copying SSH key to remote server."
+    echo "Please try manually with the following command:"
+    echo "sshpass -p '$USERPASS' ssh-copy-id -p $ssh_port -o StrictHostKeyChecking=no -i $cert_file $ssh_user@$server_ip"
+fi
 
 # Create user-specific SSH config in root home directory
 user_ssh_config="$HOME/.ssh/config"
