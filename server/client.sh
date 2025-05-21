@@ -3,7 +3,7 @@
 SCRIPT_PATH="$0"
 SCRIPT_ABS_PATH=$(readlink -f "$SCRIPT_PATH")
 SCRIPT_DIR=$(dirname "$SCRIPT_ABS_PATH")
-LOGFILE="$SCRIPT_DIR/ssh_login.log"
+LOGFILE="$SCRIPT_DIR/logs/ssh_login.log"
 USER_NAME=$(whoami)
 IP_ADDRESS=$(echo $SSH_CONNECTION | awk '{print $1}')
 DATE_TIME=$(date '+%Y-%m-%d %H:%M:%S')
