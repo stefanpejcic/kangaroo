@@ -121,6 +121,29 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# jail the remote user!
+ssh -p "$ssh_port" -o StrictHostKeyChecking=no "$ssh_user@$server_ip" << EOF
+sudo wget -O /usr/local/bin/restricted_command.sh https://raw.githubusercontent.com/stefanpejcic/openjumpserver/refs/heads/main/behind-jumserver/restricted_command.sh
+sudo chattr +i /usr/local/bin/restricted_command.sh
+
+sudo bash -c 'cat >> /etc/ssh/sshd_config << EOL
+
+##### 🦘 Kangaroo SSH JumpServer #####
+Match User '"$ssh_user"'
+    ForceCommand /usr/local/bin/restricted_command.sh
+EOL'
+
+sudo systemctl restart sshd
+EOF
+
+
+if [ $? -ne 0 ]; then
+    echo "Error running commands on remote server."
+    exit 1
+fi
+
+
+
 # Create user-specific SSH config in root home directory
 user_ssh_config="$HOME/.ssh/config"
 
