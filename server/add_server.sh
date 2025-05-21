@@ -141,6 +141,46 @@ fi
     echo ""
 } >> "$user_ssh_config"
 
+
+add_ssh_kagaroo_for_user() {
+    local user=$1
+    if [ "$user" == "root" ]; then
+        return
+    fi
+    
+    user_home_dir="$(eval echo ~$user)"
+
+    # Ensure .ssh directory exists
+    mkdir -p "$user_home_dir/.ssh"
+    chown "$user:$user" "$user_home_dir/.ssh"
+    chmod 700 "$user_home_dir/.ssh"
+
+    # Create symlink to the SSH key if it doesn't already exist
+    local ssh_key_link="$user_home_dir/.ssh/jumpserver_key"
+    if [ ! -L "$ssh_key_link" ]; then
+        ln -s "$private_key_file" "$ssh_key_link"
+    fi
+
+    # Create symlink to the kangaroo script if it doesn't already exist
+    local kangaroo_script="$user_home_dir/kangaroo.sh"
+    if [ ! -L "$kangaroo_script" ]; then
+        ln -s "$SCRIPT_DIR/client.sh" "$kangaroo_script"
+    fi
+
+    # Add entries to .bash_profile only if they don't already exist
+    local bash_profile="$user_home_dir/.bash_profile"
+    touch "$bash_profile"
+
+    grep -qxF "export PATH=$user_home_dir/bin" "$bash_profile" || echo "export PATH=$user_home_dir/bin" >> "$bash_profile"
+    grep -qxF "$HOME/kangaroo.sh" "$bash_profile" || echo "$HOME/kangaroo.sh" >> "$bash_profile"
+    grep -qxF "logout" "$bash_profile" || echo "logout" >> "$bash_profile"
+
+    # Set ownership and permissions
+    chown "$user:$user" "$bash_profile"
+    chmod 700 "$bash_profile"
+}
+
+
 # Function to set up SSH certificate-based authentication for existing users
 setup_ssh_access() {
     local user=$1
@@ -148,15 +188,19 @@ setup_ssh_access() {
     mkdir -p $authorized_keys_dir
     local authorized_keys_file="$authorized_keys_dir/authorized_keys"
     local user_ssh_config="$authorized_keys_dir/config"
-
-    ln -s "$private_key_file" "$(eval echo ~$user)/.ssh/jumpserver_key" >/dev/null
-
+    local user_home_dir="$(eval echo ~$user)"
+    ln -s "$private_key_file" "$user_home_dir/.ssh/jumpserver_key" >/dev/null
+    ln -s "$SCRIPT_DIR/client.sh" "$user_home_dir/kangaroo.sh"
+    echo "export PATH=$user_home_dir/bin" >> "/home/$username/.bash_profile"
+    echo "$HOME/kangaroo.sh" >> "$user_home_dir/.bash_profile"
+    echo "logout" >> "$user_home_dir)/.bash_profile"
+      
     if [ -f "$cert_file" ]; then
         echo "Setting up SSH access for user $user"
+        add_ssh_kagaroo_for_user "$user"
         echo "command=\"ssh -i $cert_file -p $ssh_port $ssh_user@$server_ip\" $cert_file" >> "$authorized_keys_file"
         chown "$user:$user" "$authorized_keys_file"
         chmod 600 "$authorized_keys_file"
-
 {
     echo "# Description: $server_description"
     echo "Host $server_name"
