@@ -17,7 +17,7 @@ fi
 CONFIG_FILE="$SCRIPT_DIR/jump_servers.conf"
 
 chmod a+x "${SCRIPT_DIR}/server/client.sh"
-mkdir -p ${SCRIPT_DIR}/server/logs"
+mkdir -p "${SCRIPT_DIR}/server/logs"
 touch "${SCRIPT_DIR}/server/logs/ssh_login.log"
 chmod 666 "${SCRIPT_DIR}/server/logs/ssh_login.log"
 
