@@ -1,17 +1,13 @@
 #!/bin/bash
-set -m
 
 trap '' SIGINT SIGTERM SIGTSTP
 
-# Path to SSH config
 ssh_config="$HOME/.ssh/config"
-
-# Extract the host names and descriptions from the SSH config
 available_servers=$(awk '/^Host / {host=$2} /^# Description: / {desc=$3} host {print host " - " desc; host=""}' "$ssh_config")
 
 # Prompt user to select a server using fzf
 while true; do
-    server_selection=$(echo "$available_servers" | fzf --prompt="Select a server: ")
+    server_selection=$(echo "$available_servers" | fzf --prompt="Select server: ")
 
     # If the user presses Esc or Ctrl+C in fzf, exit
     if [[ -z "$server_selection" ]]; then
