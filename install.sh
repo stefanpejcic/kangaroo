@@ -17,7 +17,7 @@ fi
 CONFIG_FILE="$SCRIPT_DIR/jump_servers.conf"
 
 chmod a+x "${SCRIPT_DIR}/server/client.sh"
-
+chmod 666 "${SCRIPT_DIR}/server/logs/ssh_login.log"
 
 if ! grep -q 'Kangaroo SSH JumpServer' /etc/ssh/sshd_config; then
 echo "Restricting all users except 'root' to ${SCRIPT_DIR}/server/client.sh"
