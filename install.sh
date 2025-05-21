@@ -1,5 +1,10 @@
 #!/bin/bash
 
+: '
+bash server/add_server.sh --description="op mejl server" --name="mail" --ip=185.119.XX.XX --password="XXXXX" --users=stefan,stefan2
+'
+
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [[ "$SCRIPT_DIR" == /root* ]]; then
     echo "❌ Do not install Kangaroo from /root/ or any of its subdirectories."
