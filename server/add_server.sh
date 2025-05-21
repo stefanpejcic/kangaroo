@@ -8,6 +8,7 @@ fi
 
 # variables
 cert_file="/etc/ssh/ssh_host_rsa_key.pub"
+private_key_file="/etc/ssh/ssh_host_rsa_key"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_FILE="$SCRIPT_DIR/jump_servers.conf"
 server_description=""
@@ -146,6 +147,9 @@ setup_ssh_access() {
     mkdir -p $authorized_keys_dir
     local authorized_keys_file="$authorized_keys_dir/authorized_keys"
     local user_ssh_config="$authorized_keys_dir/config"
+    
+    ln -s $private_key_file /home/$user/.ssh/jumpserver_key >/dev/null
+
     if [ -f "$cert_file" ]; then
         echo "Setting up SSH access for user $user"
         echo "command=\"ssh -i $cert_file -p $ssh_port $ssh_user@$server_ip\" $cert_file" >> "$authorized_keys_file"
