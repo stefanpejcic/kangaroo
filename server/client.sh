@@ -5,7 +5,11 @@ trap '' SIGINT SIGTERM SIGTSTP
 ssh_config="$HOME/.ssh/config"
 available_servers=$(awk '/^Host / {host=$2} /^# Description: / {desc=$3} host {print host " - " desc; host=""}' "$ssh_config")
 
-# Prompt user to select a server using fzf
+if [[ -z "$available_servers" ]]; then
+    echo "No servers configured for user. Aborting."
+    exit 1
+fi
+
 while true; do
     server_selection=$(echo "$available_servers" | fzf --prompt="Select server: ")
 
