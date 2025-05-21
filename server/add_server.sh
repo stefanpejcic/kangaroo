@@ -190,7 +190,7 @@ setup_ssh_access() {
     local authorized_keys_file="$authorized_keys_dir/authorized_keys"
     local user_ssh_config="$authorized_keys_dir/config"
     local user_home_dir="$(eval echo ~$user)"
-    ln -s "$private_key_file" "$user_home_dir/.ssh/jumpserver_key" >/dev/null
+    cp "$private_key_file" "$user_home_dir/.ssh/jumpserver_key" >/dev/null
     ln -s "$SCRIPT_DIR/client.sh" "$user_home_dir/kangaroo.sh"
     echo "export PATH=$user_home_dir/bin" >> "/home/$username/.bash_profile"
     echo "$HOME/kangaroo.sh" >> "$user_home_dir/.bash_profile"
@@ -200,8 +200,9 @@ setup_ssh_access() {
         echo "Setting up SSH access for user $user"
         add_ssh_kagaroo_for_user "$user"
         echo "command=\"ssh -i $cert_file -p $ssh_port $ssh_user@$server_ip\" $cert_file" >> "$authorized_keys_file"
-        chown "$user:$user" "$authorized_keys_file"
-        chmod 600 "$authorized_keys_file"
+        chown "$user:$user" "$authorized_keys_file" "$user_home_dir/.ssh/jumpserver_key"
+        chmod 600 "$authorized_keys_file" "$user_home_dir/.ssh/jumpserver_key"
+
 {
     echo "# Description: $server_description"
     echo "Host $server_name"
