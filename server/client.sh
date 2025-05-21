@@ -24,6 +24,6 @@ while true; do
 
     # Connect to the selected server
     echo "Connecting to $server_name..."
-    ssh "$server_name"
+    ssh -o StrictHostKeyChecking=no "$server_name"
     echo -e "\nDisconnected from $server_name. Returning to server selection..."
 done
