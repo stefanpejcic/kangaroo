@@ -12,8 +12,8 @@ CONFIG_FILE="/etc/jump_servers.conf"
 server_description=""
 server_name=""
 server_ip=""
-ssh_user=""
-
+ssh_user="root" #maybe?
+ssh_port=22
 
 # Parse long options
 for arg in "$@"; do
@@ -34,6 +34,10 @@ for arg in "$@"; do
       ssh_user="${arg#*=}"
       shift
       ;;
+    --port=*)
+      ssh_port="${arg#*=}"
+      shift
+      ;;
     *)
       # unknown option
       ;;
@@ -43,7 +47,7 @@ done
 
 
 
-# Prompt for missing parameters
+# Prompts
 if [[ -z "$server_description" ]]; then
   read -p "Enter the server description: " server_description
 fi
@@ -58,6 +62,12 @@ fi
 
 if [[ -z "$ssh_user" ]]; then
   read -p "Enter SSH username for the new server: " ssh_user
+  ssh_user=${ssh_user:-root}
+fi
+
+if [[ -z "$ssh_port" ]]; then
+  read -p "Enter SSH port for the new server (default 22): " ssh_port
+  ssh_port=${ssh_port:-22}
 fi
 
 
@@ -76,7 +86,7 @@ echo "Copying SSH certificate to the new server..."
 echo "Please insert the password used for ssh login on remote machine:"
 read -r USERPASS
 for TARGETIP in $@; do
-  echo "$USERPASS" | sshpass ssh-copy-id -oStrictHostKeyChecking=no -f -i $KEYLOCATION "$ssh_user"@"$server_ip"
+  echo "$USERPASS" | sshpass ssh-copy-id -p "$ssh_port" -oStrictHostKeyChecking=no -f -i $KEYLOCATION "$ssh_user"@"$server_ip"
 done
 
 
@@ -95,6 +105,7 @@ fi
     echo "Host $server_name"
     echo "    HostName $server_ip"
     echo "    User $ssh_user"
+    echo "    Port $ssh_port"
     echo "    IdentityFile ~/.ssh/jumpserver_key"
     echo "    CertificateFile $cert_file"
     echo ""
@@ -107,7 +118,7 @@ setup_ssh_access() {
     local user_ssh_config="/home/$user/.ssh/config"
     if [ -f "$cert_file" ]; then
         echo "Setting up SSH access for user $user..."
-        echo "command=\"ssh -i $cert_file $ssh_user@$server_ip\" $cert_file" >> "$authorized_keys_file"
+        echo "command=\"ssh -i $cert_file -p $ssh_port $ssh_user@$server_ip\" $cert_file" >> "$authorized_keys_file"
         chown "$user:$user" "$authorized_keys_file"
         chmod 600 "$authorized_keys_file"
 
@@ -116,6 +127,7 @@ setup_ssh_access() {
     echo "Host $server_name"
     echo "    HostName $server_ip"
     echo "    User $ssh_user"
+    echo "    Port $ssh_port"
     echo "    IdentityFile ~/.ssh/jumpserver_key"
     echo "    CertificateFile $cert_file"
     echo ""
@@ -139,7 +151,7 @@ if [[ "$add_to_all" =~ ^[Yy]$ ]]; then
         setup_ssh_access "$user"
     done
 else
-    read -p "Enter the usernames to add (space-separated): " specific_users
+    read -p "Enter the usernames to setup SSH access for (space-separated): " specific_users
     for user in $specific_users; do
         if id "$user" &>/dev/null; then
             setup_ssh_access "$user"
@@ -149,4 +161,4 @@ else
     done
 fi
 
-echo "Server $server_name ($server_ip) added, and SSH access configured using certificates from JumpServer."
+echo "Server $server_name ($server_ip:$ssh_port) added, and SSH access configured using certificates from JumpServer."
