@@ -4,6 +4,8 @@
 sudo apt update
 sudo apt install fzf
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONFIG_FILE="$SCRIPT_DIR/jump_servers.conf"
 
 if ! grep -q 'Kangaroo SSH JumpServer' /etc/ssh/sshd_config; then
   cat << EOF >> /etc/ssh/sshd_config
@@ -11,7 +13,7 @@ if ! grep -q 'Kangaroo SSH JumpServer' /etc/ssh/sshd_config; then
 PubkeyAuthentication yes
 AuthorizedKeysFile .ssh/authorized_keys
 Match User *,!root
-    ForceCommand %h/kangaroo.sh
+    ForceCommand ${SCRIPT_DIR}/server/client.sh
 EOF
 fi
 
