@@ -16,6 +16,9 @@ fi
 
 CONFIG_FILE="$SCRIPT_DIR/jump_servers.conf"
 
+chmod a+x "${SCRIPT_DIR}/server/client.sh"
+
+
 if ! grep -q 'Kangaroo SSH JumpServer' /etc/ssh/sshd_config; then
 echo "Restricting all users except 'root' to ${SCRIPT_DIR}/server/client.sh"
 
@@ -29,9 +32,8 @@ EOF
 
 echo "Restarting SSH service.."
 sudo systemctl restart ssh
-
 fi
 
-chmod a+x "${SCRIPT_DIR}/server/client.sh"
 
 echo "🦘 Kangaroo SSH JumpServer is installed!"
+exit 0
