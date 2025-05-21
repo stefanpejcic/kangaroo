@@ -83,7 +83,7 @@ echo "$server_name $server_ip" >> "$CONFIG_FILE"
 # Copy the certificate to the new server's authorized keys
 echo "Copying SSH certificate to the new server..."
 
-echo "Please insert the password used for ssh login on remote machine:"
+echo "Insert password for $ssh_user@$server_ip:$ssh_port"
 read -r USERPASS
 for TARGETIP in $@; do
   echo "$USERPASS" | sshpass ssh-copy-id -p "$ssh_port" -oStrictHostKeyChecking=no -f -i $cert_file "$ssh_user"@"$server_ip"
