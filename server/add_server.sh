@@ -89,8 +89,6 @@ if [ ! -f "$CONFIG_FILE" ]; then
     chmod 600 "$CONFIG_FILE"
 fi
 
-# Add the new server to the configuration file
-echo "$server_name $server_ip" >> "$CONFIG_FILE"
 
 # Copy the certificate to the new server's authorized keys
 echo "Copying SSH certificate to the new server..."
@@ -102,13 +100,15 @@ else
    USERPASS="$ssh_password"
 fi
 
+clear 
+
 # check first
 if ! command -v sshpass >/dev/null 2>&1; then
     echo "sshpass not found. Installing..."
     apt update -qq >/dev/null && apt install -y -qq sshpass >/dev/null
     echo "sshpass installed successfully."
+    clear
 fi
-
 
 # run!
 echo "$USERPASS" | sshpass ssh-copy-id -p "$ssh_port" -o StrictHostKeyChecking=no -f -i "$cert_file" "$ssh_user@$server_ip" >/dev/null 2>&1
@@ -117,6 +117,7 @@ if [ $? -ne 0 ]; then
     echo "Error copying SSH key to remote server."
     echo "Please try manually with the following command:"
     echo "sshpass -p '$USERPASS' ssh-copy-id -p $ssh_port -o StrictHostKeyChecking=no -i $cert_file $ssh_user@$server_ip"
+    exit 1
 fi
 
 # Create user-specific SSH config in root home directory
@@ -170,7 +171,8 @@ setup_ssh_access() {
 
         
     else
-        echo "No SSH certificate found for the new server."
+        echo "No SSH certificate found."
+        exit 1
     fi
 }
 
@@ -209,4 +211,10 @@ else
       setup_for_some_users "$selected_users"
    fi
 fi
+
+echo "$server_name $server_ip" >> "$CONFIG_FILE"
+
+clear
 echo "Server $server_name ($server_ip:$ssh_port) added, and SSH access configured using certificates from Kangaroo 🦘"
+
+exit 0
