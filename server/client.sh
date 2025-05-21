@@ -1,4 +1,5 @@
 #!/bin/bash
+set -m
 
 trap '' SIGINT SIGTERM SIGTSTP
 
