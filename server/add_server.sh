@@ -13,8 +13,9 @@ CONFIG_FILE="/etc/jump_servers.conf"
 
 # Ensure the CA keys exist
 if [ ! -f "$CA_KEY" ] || [ ! -f "$CA_CERT" ]; then
-    echo "SSH Certificate Authority keys not found. Please create them first."
-    exit 1
+    echo "SSH Certificate Authority keys not found. Generating..."
+    ssh-keygen -f $CA_KEY -C "Kangaroo CA" -N ""
+    #exit 1
 fi
 
 # Get server details from user
