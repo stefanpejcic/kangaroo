@@ -122,8 +122,8 @@ if [ $? -ne 0 ]; then
 fi
 
 # jail the remote user!
-ssh -p "$ssh_port" -o StrictHostKeyChecking=no  -i $private_key_file "$ssh_user@$server_ip"  >/dev/null 2>&1 << EOF
-sudo wget -O /usr/local/bin/restricted_command.sh https://raw.githubusercontent.com/stefanpejcic/openjumpserver/refs/heads/main/behind-jumserver/restricted_command.sh
+ssh -p "$ssh_port" -o StrictHostKeyChecking=no  -i $private_key_file "$ssh_user@$server_ip"  << EOF
+sudo wget --no-verbose -O /usr/local/bin/restricted_command.sh https://raw.githubusercontent.com/stefanpejcic/openjumpserver/refs/heads/main/behind-jumserver/restricted_command.sh
 sudo chattr +i /usr/local/bin/restricted_command.sh
 
 sudo bash -c 'cat >> /etc/ssh/sshd_config << EOL
@@ -133,7 +133,7 @@ Match User '"$ssh_user"'
     ForceCommand /usr/local/bin/restricted_command.sh
 EOL'
 
-sudo systemctl restart sshd
+sudo systemctl restart sshd  >/dev/null
 EOF
 
 
