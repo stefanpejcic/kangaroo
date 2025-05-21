@@ -147,7 +147,7 @@ setup_ssh_access() {
     local authorized_keys_file="$authorized_keys_dir/authorized_keys"
     local user_ssh_config="$authorized_keys_dir/config"
     if [ -f "$cert_file" ]; then
-        echo "Setting up SSH access for user $user..."
+        echo "Setting up SSH access for user $user"
         echo "command=\"ssh -i $cert_file -p $ssh_port $ssh_user@$server_ip\" $cert_file" >> "$authorized_keys_file"
         chown "$user:$user" "$authorized_keys_file"
         chmod 600 "$authorized_keys_file"
