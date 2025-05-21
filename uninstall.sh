@@ -34,7 +34,7 @@ remove_git_dir() {
       read -p "Do you want to delete the client script? [y/N]: " DELETE_SCRIPT
       if [[ "$DELETE_SCRIPT" =~ ^[Yy]$ ]]; then
           echo "Deleting $CLIENT_SCRIPT..."
-          rm -f "$SCRIPT_DIR"
+          rm -rf "$SCRIPT_DIR"
       fi
   fi
 }
