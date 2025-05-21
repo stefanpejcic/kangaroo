@@ -162,12 +162,6 @@ add_ssh_kagaroo_for_user() {
         ln -s "$private_key_file" "$ssh_key_link"
     fi
 
-    # Create symlink to the kangaroo script if it doesn't already exist
-    local kangaroo_script="$user_home_dir/kangaroo.sh"
-    if [ ! -L "$kangaroo_script" ]; then
-        ln -s "$SCRIPT_DIR/client.sh" "$kangaroo_script"
-    fi
-
     # Add entries to .bash_profile only if they don't already exist
     local bash_profile="$user_home_dir/.bash_profile"
     touch "$bash_profile"
