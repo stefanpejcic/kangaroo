@@ -103,8 +103,6 @@ fi
 clear 
 
 
-chmod 644 $private_key_file
-
 # check first
 if ! command -v sshpass >/dev/null 2>&1; then
     echo "sshpass not found. Installing..."
