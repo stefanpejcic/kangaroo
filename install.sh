@@ -1,5 +1,11 @@
 #!/bin/bash
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ "$SCRIPT_DIR" == /root* ]]; then
+    echo "❌ Do not install Kangaroo from /root/ or any of its subdirectories."
+    echo "Users can not access /root/ - instead install in /home/ or other shared location."
+    exit 1
+fi
 
 if ! command -v fzf >/dev/null 2>&1; then
     echo "Installing fzf..."
@@ -8,10 +14,6 @@ if ! command -v fzf >/dev/null 2>&1; then
     clear
 fi
 
-
-
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_FILE="$SCRIPT_DIR/jump_servers.conf"
 
 if ! grep -q 'Kangaroo SSH JumpServer' /etc/ssh/sshd_config; then
