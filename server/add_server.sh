@@ -95,6 +95,15 @@ else
    USERPASS="$ssh_password"
 fi
 
+# check first
+if ! command -v sshpass >/dev/null 2>&1; then
+    echo "sshpass not found. Installing..."
+    apt update -qq >/dev/null && apt install -y -qq sshpass >/dev/null
+    echo "sshpass installed successfully."
+fi
+
+
+# run!
 echo "$USERPASS" | sshpass ssh-copy-id -p "$ssh_port" -oStrictHostKeyChecking=no -f -i $cert_file "$ssh_user"@"$server_ip"
 
 # Create user-specific SSH config in root home directory
