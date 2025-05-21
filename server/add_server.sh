@@ -14,6 +14,7 @@ server_name=""
 server_ip=""
 ssh_user="root" #maybe?
 ssh_port=22
+ssh_password=""
 
 # Parse long options
 for arg in "$@"; do
@@ -36,6 +37,10 @@ for arg in "$@"; do
       ;;
     --port=*)
       ssh_port="${arg#*=}"
+      shift
+      ;;
+    --password=*)
+      ssh_password="${arg#*=}"
       shift
       ;;
     *)
@@ -83,12 +88,14 @@ echo "$server_name $server_ip" >> "$CONFIG_FILE"
 # Copy the certificate to the new server's authorized keys
 echo "Copying SSH certificate to the new server..."
 
-echo "Insert password for $ssh_user@$server_ip:$ssh_port"
-read -r USERPASS
-for TARGETIP in $@; do
-  echo "$USERPASS" | sshpass ssh-copy-id -p "$ssh_port" -oStrictHostKeyChecking=no -f -i $cert_file "$ssh_user"@"$server_ip"
-done
+if [[ -z "$server_description" ]]; then
+   echo "Insert password for $ssh_user@$server_ip:$ssh_port"
+   read -r USERPASS
+else
+   USERPASS="$ssh_password"
+fi
 
+echo "$USERPASS" | sshpass ssh-copy-id -p "$ssh_port" -oStrictHostKeyChecking=no -f -i $cert_file "$ssh_user"@"$server_ip"
 
 # Create user-specific SSH config in root home directory
 user_ssh_config="$HOME/.ssh/config"
