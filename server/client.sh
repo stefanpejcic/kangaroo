@@ -33,12 +33,15 @@ while true; do
         echo "Exiting..."
         exit 0
     fi
-
-    # Extract server name from selection
+    
     server_name=$(echo "$server_selection" | awk '{print $1}')
+    DATE_TIME=$(date '+%Y-%m-%d %H:%M:%S')  
+    echo "User: $USER_NAME connected to server: $server_name using IP: $IP_ADDRESS at $DATE_TIME" >> $LOGFILE
 
     # Connect to the selected server
     echo "Connecting to $server_name..."
     ssh -o StrictHostKeyChecking=no "$server_name"
     echo -e "\nDisconnected from $server_name. Returning to server selection..."
+    DATE_TIME=$(date '+%Y-%m-%d %H:%M:%S')  
+    echo "User: $USER_NAME disconnected from server: $server_name using IP: $IP_ADDRESS at $DATE_TIME" >> $LOGFILE
 done
