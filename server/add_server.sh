@@ -144,12 +144,12 @@ fi
 # Function to set up SSH certificate-based authentication for existing users
 setup_ssh_access() {
     local user=$1
-    local authorized_keys_dir="/home/$user/.ssh"
+    local authorized_keys_dir="$(eval echo ~$user)/.ssh"
     mkdir -p $authorized_keys_dir
     local authorized_keys_file="$authorized_keys_dir/authorized_keys"
     local user_ssh_config="$authorized_keys_dir/config"
-    
-    ln -s $private_key_file /home/$user/.ssh/jumpserver_key >/dev/null
+
+    ln -s "$private_key_file" "$(eval echo ~$user)/.ssh/jumpserver_key" >/dev/null
 
     if [ -f "$cert_file" ]; then
         echo "Setting up SSH access for user $user"
