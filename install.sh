@@ -34,4 +34,4 @@ fi
 
 
 
-echo "Success: 🦘 Kangaroo SSH JumpServer is installed!"
+echo "🦘 Kangaroo SSH JumpServer is installed!"
