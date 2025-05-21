@@ -3,6 +3,12 @@
 trap '' SIGINT SIGTERM SIGTSTP
 
 ssh_config="$HOME/.ssh/config"
+
+if [ ! -f "$ssh_config" ]; then
+    echo "No servers configured for user. Aborting."
+    exit 1
+fi
+
 available_servers=$(awk '/^Host / {host=$2} /^# Description: / {desc=$3} host {print host " - " desc; host=""}' "$ssh_config")
 
 if [[ -z "$available_servers" ]]; then
