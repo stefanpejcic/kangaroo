@@ -7,7 +7,7 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 # variables
-KEYLOCATION="/etc/ssh/ssh_host_rsa_key.pub"
+cert_file="/etc/ssh/ssh_host_rsa_key.pub"
 CONFIG_FILE="/etc/jump_servers.conf"
 server_description=""
 server_name=""
@@ -86,7 +86,7 @@ echo "Copying SSH certificate to the new server..."
 echo "Please insert the password used for ssh login on remote machine:"
 read -r USERPASS
 for TARGETIP in $@; do
-  echo "$USERPASS" | sshpass ssh-copy-id -p "$ssh_port" -oStrictHostKeyChecking=no -f -i $KEYLOCATION "$ssh_user"@"$server_ip"
+  echo "$USERPASS" | sshpass ssh-copy-id -p "$ssh_port" -oStrictHostKeyChecking=no -f -i $cert_file "$ssh_user"@"$server_ip"
 done
 
 
