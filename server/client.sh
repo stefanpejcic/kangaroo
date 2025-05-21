@@ -1,5 +1,14 @@
 #!/bin/bash
 
+SCRIPT_PATH="$0"
+SCRIPT_ABS_PATH=$(readlink -f "$SCRIPT_PATH")
+SCRIPT_DIR=$(dirname "$SCRIPT_ABS_PATH")
+LOGFILE="$SCRIPT_DIR/ssh_login.log"
+USER_NAME=$(whoami)
+IP_ADDRESS=$(echo $SSH_CONNECTION | awk '{print $1}')
+DATE_TIME=$(date '+%Y-%m-%d %H:%M:%S')
+echo "User: $USER_NAME connected from IP: $IP_ADDRESS at $DATE_TIME" >> $LOGFILE
+
 trap '' SIGINT SIGTERM SIGTSTP
 
 ssh_config="$HOME/.ssh/config"
