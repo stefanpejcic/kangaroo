@@ -5,10 +5,15 @@ sudo apt update
 sudo apt install fzf
 
 
-
-
-# Ensure these lines are set as follows:
+if ! grep -q 'Kangaroo SSH JumpServer' /etc/ssh/sshd_config; then
+  cat << EOF >> /etc/ssh/sshd_config
+##### 🦘 Kangaroo SSH JumpServer #####
 PubkeyAuthentication yes
 AuthorizedKeysFile .ssh/authorized_keys
+Match User *,!root
+    ForceCommand /kangaroo.sh
+EOF
+fi
+
 
 sudo systemctl restart ssh
