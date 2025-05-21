@@ -30,8 +30,6 @@ sudo systemctl restart ssh
 
 fi
 
-
-
-
+chmod a+x "${SCRIPT_DIR}/server/client.sh"
 
 echo "🦘 Kangaroo SSH JumpServer is installed!"
