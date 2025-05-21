@@ -1,8 +1,15 @@
 #!/bin/bash
 
 
-sudo apt update
-sudo apt install fzf
+if ! command -v fzf >/dev/null 2>&1; then
+    echo "Installing fzf..."
+    apt update -qq >/dev/null && apt install -y -qq fzf >/dev/null
+    echo "fzf installed successfully."
+    clear
+fi
+
+
+
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_FILE="$SCRIPT_DIR/jump_servers.conf"
@@ -17,5 +24,9 @@ Match User *,!root
 EOF
 fi
 
-
+echo "Restarting SSH service.."
 sudo systemctl restart ssh
+
+
+
+echo "Success: 🦘 Kangaroo SSH JumpServer is installed!"
