@@ -6,22 +6,60 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-# Define variables
-CA_KEY="/etc/ssh/ca_key"
+# variables
+KEYLOCATION="/etc/ssh/ssh_host_rsa_key.pub"
 CONFIG_FILE="/etc/jump_servers.conf"
+server_description=""
+server_name=""
+server_ip=""
+ssh_user=""
 
-# Ensure the CA keys exist
-if [ ! -f "$CA_KEY" ]; then
-    echo "SSH Certificate Authority keys not found. Generating..."
-    ssh-keygen -f $CA_KEY -C "Kangaroo CA" -N ""
-    #exit 1
+
+# Parse long options
+for arg in "$@"; do
+  case $arg in
+    --description=*)
+      server_description="${arg#*=}"
+      shift
+      ;;
+    --name=*)
+      server_name="${arg#*=}"
+      shift
+      ;;
+    --ip=*)
+      server_ip="${arg#*=}"
+      shift
+      ;;
+    --user=*)
+      ssh_user="${arg#*=}"
+      shift
+      ;;
+    *)
+      # unknown option
+      ;;
+  esac
+done
+
+
+
+
+# Prompt for missing parameters
+if [[ -z "$server_description" ]]; then
+  read -p "Enter the server description: " server_description
 fi
 
-# Get server details from user
-read -p "Enter the server description: " server_description
-read -p "Enter the server name (e.g., webserver1): " server_name
-read -p "Enter the server IP address: " server_ip
-read -p "Enter SSH username for the new server: " ssh_user
+if [[ -z "$server_name" ]]; then
+  read -p "Enter the server name (e.g., webserver1): " server_name
+fi
+
+if [[ -z "$server_ip" ]]; then
+  read -p "Enter the server IP address: " server_ip
+fi
+
+if [[ -z "$ssh_user" ]]; then
+  read -p "Enter SSH username for the new server: " ssh_user
+fi
+
 
 # Add server to a configuration file
 if [ ! -f "$CONFIG_FILE" ]; then
@@ -32,17 +70,15 @@ fi
 # Add the new server to the configuration file
 echo "$server_name $server_ip" >> "$CONFIG_FILE"
 
-# Generate the SSH certificate for the user
-cert_file="/etc/ssh/authorized_keys_${server_name}.cert"
-
-# Create the SSH certificate
-ssh-keygen -s "$CA_KEY" -I "$server_name" -n "$ssh_user" -V +52w "$cert_file"
-
 # Copy the certificate to the new server's authorized keys
-ssh_command="ssh-copy-id -i $cert_file $ssh_user@$server_ip"
-
 echo "Copying SSH certificate to the new server..."
-eval $ssh_command
+
+echo "Please insert the password used for ssh login on remote machine:"
+read -r USERPASS
+for TARGETIP in $@; do
+  echo "$USERPASS" | sshpass ssh-copy-id -oStrictHostKeyChecking=no -f -i $KEYLOCATION "$ssh_user"@"$server_ip"
+done
+
 
 # Create user-specific SSH config in root home directory
 user_ssh_config="$HOME/.ssh/config"
@@ -96,7 +132,7 @@ setup_ssh_access() {
 read -p "Do you want to set up SSH access for all existing users? (y/n): " add_to_all
 
 # Get existing users
-existing_users=$(cut -f1 -d: /etc/passwd | grep -v '^root$')
+existing_users=$(awk -F: '($7 == "/bin/bash" || $7 == "/bin/sh") {print $1}' /etc/passwd)
 
 if [[ "$add_to_all" =~ ^[Yy]$ ]]; then
     for user in $existing_users; do
