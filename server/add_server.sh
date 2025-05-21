@@ -8,7 +8,8 @@ fi
 
 # variables
 cert_file="/etc/ssh/ssh_host_rsa_key.pub"
-CONFIG_FILE="/etc/jump_servers.conf"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONFIG_FILE="$SCRIPT_DIR/jump_servers.conf"
 server_description=""
 server_name=""
 server_ip=""
