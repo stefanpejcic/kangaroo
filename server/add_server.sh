@@ -112,7 +112,7 @@ if ! command -v sshpass >/dev/null 2>&1; then
 fi
 
 # run!
-echo "$USERPASS" | sshpass ssh-copy-id -p "$ssh_port" -o StrictHostKeyChecking=no -f -i "$cert_file" "$ssh_user@$server_ip" >/dev/null 2>&1
+timeout 15s bash -c "echo \"$USERPASS\" | sshpass ssh-copy-id -p \"$ssh_port\" -o StrictHostKeyChecking=no -f -i \"$cert_file\" \"$ssh_user@$server_ip\"" >/dev/null 2>&1
 
 if [ $? -ne 0 ]; then
     echo "Error copying SSH key to remote server."
