@@ -20,12 +20,24 @@ git clone https://github.com/stefanpejcic/kangaroo/ && bash kangaroo/install.sh
 
 
 ## Usage
+```
+Commands:
+  add-server         Add a new server and assign it to users.
+  delete-server      Delete SERVER from USERNAME's SSH config file.
+  delete-server-all  Delete SERVER from all users' SSH config files.
+  login-logs         Show ssh login logs.
+  server             Show SSH config for SERVER from all users.
+  servers            List all hosts and number of users who have access.
+  user               Show SSH servers and configs for a specific USERNAME.
+  users              List all SSH Users.
+```
 
-- `bash  server/add_server.sh --description="new slave server for testing" --name="slave1" --ip=185.119.XX.XX --password="rnj4vZ9Czeg0VWp" --user=all` or interactive: `bash server/add_server.sh`
 
 
+## Todo
 
-
+- [ ] [2FA](https://www.digitalocean.com/community/tutorials/how-to-set-up-multi-factor-authentication-for-ssh-on-ubuntu-20-04#step-1-installing-google-s-pam)
+- [ ] 
 
 ## Uninstall
 ```
