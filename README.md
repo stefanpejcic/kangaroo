@@ -20,6 +20,7 @@ git clone https://github.com/stefanpejcic/kangaroo/ && bash kangaroo/install.sh
 
 
 ## Usage
+
 ```
 Commands:
   add-server         Add a new server and assign it to users.
@@ -40,6 +41,7 @@ Commands:
 - [ ] 
 
 ## Uninstall
+
 ```
 bash kangaroo/uninstall.sh
 ```
