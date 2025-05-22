@@ -23,10 +23,10 @@ fi
 sudo mkdir -p /var/log/remote/
 sudo chown syslog:adm /var/log/remote
 
-if ! grep -q 'Kangaroo SSH JumpServer' etc/rsyslog.d/remote.conf; then
+if ! grep -q 'Kangaroo SSH JumpServer' /etc/rsyslog.d/remote.conf; then
 echo "Configuring logs from slave servers.."
 
-  cat << EOF >> etc/rsyslog.d/remote.conf
+  cat << EOF >> /etc/rsyslog.d/remote.conf
 ##### 🦘 Kangaroo SSH JumpServer #####
 $template RemoteLog,"/var/log/remote/%HOSTNAME%.log"
 *.* ?RemoteLog
