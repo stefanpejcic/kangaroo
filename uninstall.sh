@@ -6,6 +6,15 @@ CONFIG_FILE="$SCRIPT_DIR/jump_servers.conf"
 SSHD_CONFIG="/etc/ssh/sshd_config"
 CLIENT_SCRIPT="${SCRIPT_DIR}/server/client.sh"
 
+remove_logs() {
+  rm -rf /var/log/remote >/dev/null
+  if grep -q 'Kangaroo SSH JumpServer' "/etc/rsyslog.d/remote.conf"; then
+      echo "Reverting sshd_config changes..."
+      sed -i '/##### 🦘 Kangaroo SSH JumpServer #####/,+3d' "/etc/rsyslog.d/remote.conf"
+      echo "Restarting rsyslog service..."
+      systemctl restart rsyslog
+  fi
+}
 
 remove_ssh_force_command() {
   if grep -q 'Kangaroo SSH JumpServer' "$SSHD_CONFIG"; then
@@ -18,7 +27,7 @@ remove_ssh_force_command() {
   
       # Restart SSH service
       echo "Restarting SSH service..."
-      systemctl restart ssh
+      systemctl restart ssh 
   fi
 }
 
@@ -54,6 +63,7 @@ remove_for_all_users() {
 # main
 echo "🧹 Uninstalling Kangaroo SSH JumpServer..."
 remove_ssh_force_command
+remove_logs
 uninstall_fzf
 remove_for_all_users
 remove_git_dir
