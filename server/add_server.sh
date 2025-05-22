@@ -261,7 +261,7 @@ setup_ssh_access() {
     local user_ssh_config="$authorized_keys_dir/config"
     local user_home_dir="$(eval echo ~$user)"
     cp "$private_key_file" "$user_home_dir/.ssh/jumpserver_key" >/dev/null
-    ln -s "$SCRIPT_DIR/client.sh" "$user_home_dir/kangaroo.sh"
+    ln -s "$SCRIPT_DIR/client.sh" "$user_home_dir/kangaroo.sh" >/dev/null
     echo "export PATH=$user_home_dir/bin" >> "/home/$username/.bash_profile"
     echo "$HOME/kangaroo.sh" >> "$user_home_dir/.bash_profile"
     echo "logout" >> "$user_home_dir/.bash_profile"
