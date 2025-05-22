@@ -5,6 +5,48 @@ bash server/add_server.sh --description="op mejl server" --name="mail" --ip=185.
 '
 
 
+log_collector() {
+
+if ! grep -q 'Kangaroo SSH JumpServer' /etc/rsyslog.conf; then
+echo "Configuring logs from slave servers.."
+
+  cat << EOF >> /etc/rsyslog.conf
+##### 🦘 Kangaroo SSH JumpServer #####
+module(load="imudp")
+input(type="imudp" port="514")
+module(load="imtcp")
+input(type="imtcp" port="514")
+EOF
+
+fi
+
+sudo mkdir -p /var/log/remote/
+sudo chown syslog:adm /var/log/remote
+
+if ! grep -q 'Kangaroo SSH JumpServer' etc/rsyslog.d/remote.conf; then
+echo "Configuring logs from slave servers.."
+
+  cat << EOF >> etc/rsyslog.d/remote.conf
+##### 🦘 Kangaroo SSH JumpServer #####
+$template RemoteLog,"/var/log/remote/%HOSTNAME%.log"
+*.* ?RemoteLog
+& ~
+EOF
+
+clear
+
+fi
+
+
+echo "Restarting rsyslog service.."
+sudo systemctl restart rsyslog
+clear
+
+}
+
+
+
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [[ "$SCRIPT_DIR" == /root* ]]; then
     echo "❌ Do not install Kangaroo from /root/ or any of its subdirectories."
