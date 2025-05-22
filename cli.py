@@ -305,5 +305,46 @@ def add_server(description, name, ip, user, port, password, users):
 
 
 
+
+@cli.command()
+@click.option('--head', is_flag=True, help='Show first lines instead of last')
+@click.option('--lines', default=10, show_default=True, help='Number of lines to show')
+@click.option('--follow', is_flag=True, help='Follow the log file (like tail -f)')
+def login_logs(head, lines, follow):
+    """
+    Show ssh login logs.
+    """
+    log_path = './server/logs/ssh_login.log'
+
+    if not os.path.isfile(log_path):
+        click.echo(f"No logs yet.")
+        return
+
+    if follow and head:
+        click.echo("Cannot use --head and --follow together.")
+        return
+
+    cmd = []
+
+    if head:
+        cmd = ['head', f'-n{lines}', log_path]
+    else:
+        cmd = ['tail', f'-n{lines}']
+        if follow:
+            cmd.append('-f')
+        cmd.append(log_path)
+
+    try:
+        with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) as proc:
+            for line in proc.stdout:
+                click.echo(line, nl=False)
+            proc.wait()
+            if proc.returncode != 0:
+                err = proc.stderr.read()
+                click.echo(f"Error reading log: {err}", err=True)
+    except Exception as e:
+        click.echo(f"Failed to read log file: {e}")
+
+
 if __name__ == "__main__":
     cli()
