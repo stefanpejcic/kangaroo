@@ -183,34 +183,15 @@ if [ $? -ne 0 ]; then
 fi
 }
 
+
+
+
+
+
 # MAIN
 
 get_server_ipv4
 jail_all_users_on_remote
-
-
-
-
-# Create user-specific SSH config in root home directory
-user_ssh_config="$HOME/.ssh/config"
-
-# Ensure the user has an SSH config file
-if [ ! -f "$user_ssh_config" ]; then
-    touch "$user_ssh_config"
-    chmod 600 "$user_ssh_config"
-fi
-
-# add for root
-{
-    echo "# Description: $server_description"
-    echo "Host $server_name"
-    echo "    HostName $server_ip"
-    echo "    User $ssh_user"
-    echo "    Port $ssh_port"
-    echo "    IdentityFile ~/.ssh/jumpserver_key"
-    echo "    CertificateFile $cert_file"
-    echo ""
-} >> "$user_ssh_config"
 
 
 
@@ -227,6 +208,29 @@ add_ssh_kagaroo_for_user() {
     mkdir -p "$user_home_dir/.ssh"
     chown "$user:$user" "$user_home_dir/.ssh"
     chmod 700 "$user_home_dir/.ssh"
+
+    user_ssh_config="$user_home_dir/.ssh/config"
+
+	# Ensure the user has an SSH config file
+	if [ ! -f "$user_ssh_config" ]; then
+	    touch "$user_ssh_config"
+	    chmod 600 "$user_ssh_config"
+	fi
+
+	# add for root
+	{
+	    echo "# Description: $server_description"
+	    echo "Host $server_name"
+	    echo "    HostName $server_ip"
+	    echo "    User $ssh_user"
+	    echo "    Port $ssh_port"
+	    echo "    IdentityFile ~/.ssh/jumpserver_key"
+	    echo "    CertificateFile $cert_file"
+	    echo ""
+	} >> "$user_ssh_config"
+	
+
+
 
     # Create symlink to the SSH key if it doesn't already exist
     local ssh_key_link="$user_home_dir/.ssh/jumpserver_key"
