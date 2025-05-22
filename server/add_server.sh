@@ -100,7 +100,7 @@ else
    USERPASS="$ssh_password"
 fi
 
-clear 
+#clear 
 
 
 # check first
@@ -108,7 +108,7 @@ if ! command -v sshpass >/dev/null 2>&1; then
     echo "sshpass not found. Installing..."
     apt update -qq >/dev/null && apt install -y -qq sshpass >/dev/null
     echo "sshpass installed successfully."
-    clear
+    #clear
 fi
 
 # run!
@@ -331,7 +331,7 @@ fi
 
 echo "$server_name $server_ip" >> "$CONFIG_FILE"
 
-clear
+#clear
 echo "Server $server_name ($server_ip:$ssh_port) added, and SSH access configured using certificates from Kangaroo 🦘"
 
 exit 0
