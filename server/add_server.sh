@@ -206,7 +206,7 @@ add_ssh_kagaroo_for_user() {
 
     # Ensure .ssh directory exists
     mkdir -p "$user_home_dir/.ssh"
-    chown "$user:$user" "$user_home_dir/.ssh"
+    
     chmod 700 "$user_home_dir/.ssh"
 
     user_ssh_config="$user_home_dir/.ssh/config"
@@ -229,7 +229,7 @@ add_ssh_kagaroo_for_user() {
 	    echo ""
 	} >> "$user_ssh_config"
 	
-
+	chown -R "$user:$user" "$user_home_dir/.ssh"
 
 
     # Create symlink to the SSH key if it doesn't already exist
