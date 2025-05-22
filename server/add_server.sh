@@ -235,7 +235,7 @@ add_ssh_kagaroo_for_user() {
     # Create symlink to the SSH key if it doesn't already exist
     local ssh_key_link="$user_home_dir/.ssh/jumpserver_key"
     if [ ! -L "$ssh_key_link" ]; then
-        ln -s "$private_key_file" "$ssh_key_link"  >/dev/null
+        ln -s "$private_key_file" "$ssh_key_link" >/dev/null 2>&1
     fi
 
     # Add entries to .bash_profile only if they don't already exist
@@ -260,8 +260,8 @@ setup_ssh_access() {
     local authorized_keys_file="$authorized_keys_dir/authorized_keys"
     local user_ssh_config="$authorized_keys_dir/config"
     local user_home_dir="$(eval echo ~$user)"
-    cp "$private_key_file" "$user_home_dir/.ssh/jumpserver_key" >/dev/null
-    ln -s "$SCRIPT_DIR/client.sh" "$user_home_dir/kangaroo.sh" >/dev/null
+    cp "$private_key_file" "$user_home_dir/.ssh/jumpserver_key" >/dev/null 2>&1
+    ln -s "$SCRIPT_DIR/client.sh" "$user_home_dir/kangaroo.sh" >/dev/null 2>&1
     echo "export PATH=$user_home_dir/bin" >> "/home/$username/.bash_profile"
     echo "$HOME/kangaroo.sh" >> "$user_home_dir/.bash_profile"
     echo "logout" >> "$user_home_dir/.bash_profile"
