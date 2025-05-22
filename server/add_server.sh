@@ -235,7 +235,7 @@ add_ssh_kagaroo_for_user() {
     # Create symlink to the SSH key if it doesn't already exist
     local ssh_key_link="$user_home_dir/.ssh/jumpserver_key"
     if [ ! -L "$ssh_key_link" ]; then
-        ln -s "$private_key_file" "$ssh_key_link"
+        ln -s "$private_key_file" "$ssh_key_link"  >/dev/null
     fi
 
     # Add entries to .bash_profile only if they don't already exist
