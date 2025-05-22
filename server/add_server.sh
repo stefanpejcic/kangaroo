@@ -161,7 +161,7 @@ if ! grep -q "\$SSH_CONFIG_MATCH" /etc/ssh/sshd_config; then
 \$SSH_CONFIG_MATCH
     ForceCommand \$SCRIPT_PATH
 EOL"
-    sudo systemctl restart sshd >/dev/null
+    sudo systemctl restart ssh >/dev/null
 fi
 
 # Add rsyslog forwarding only if not already added
