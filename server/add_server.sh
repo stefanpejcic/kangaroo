@@ -264,7 +264,7 @@ setup_ssh_access() {
     ln -s "$SCRIPT_DIR/client.sh" "$user_home_dir/kangaroo.sh"
     echo "export PATH=$user_home_dir/bin" >> "/home/$username/.bash_profile"
     echo "$HOME/kangaroo.sh" >> "$user_home_dir/.bash_profile"
-    echo "logout" >> "$user_home_dir)/.bash_profile"
+    echo "logout" >> "$user_home_dir/.bash_profile"
       
     if [ -f "$cert_file" ]; then
         echo "Setting up SSH access for user $user"
