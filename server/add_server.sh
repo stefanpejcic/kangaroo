@@ -134,9 +134,15 @@ Match User '"$ssh_user"'
     ForceCommand /usr/local/bin/restricted_command.sh
 EOL'
 
-sudo systemctl restart sshd  >/dev/null
-EOF
+sudo systemctl restart sshd >/dev/null
 
+sudo bash -c 'cat >> /etc/rsyslog.conf << EOL
+##### 🦘 Kangaroo SSH JumpServer #####
+*.* @server-a-ip-address:514
+EOL'
+
+sudo systemctl restart rsyslog >/dev/null
+EOF
 
 if [ $? -ne 0 ]; then
     echo "Error running commands on remote server."
@@ -275,6 +281,7 @@ else
       setup_for_some_users "$selected_users"
    fi
 fi
+
 
 echo "$server_name $server_ip" >> "$CONFIG_FILE"
 
