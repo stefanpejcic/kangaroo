@@ -273,16 +273,21 @@ setup_ssh_access() {
         chown "$user:$user" "$authorized_keys_file" "$user_home_dir/.ssh/jumpserver_key"
         chmod 600 "$authorized_keys_file" "$user_home_dir/.ssh/jumpserver_key"
 
-{
-    echo "# Description: $server_description"
-    echo "Host $server_name"
-    echo "    HostName $server_ip"
-    echo "    User $ssh_user"
-    echo "    Port $ssh_port"
-    echo "    IdentityFile ~/.ssh/jumpserver_key"
-    echo "    CertificateFile $cert_file"
-    echo ""
-} >> "$user_ssh_config"
+	if ! grep -q "Host $server_name" "$user_ssh_config"; then
+	    {
+	        echo "# Description: $server_description"
+	        echo "Host $server_name"
+	        echo "    HostName $server_ip"
+	        echo "    User $ssh_user"
+	        echo "    Port $ssh_port"
+	        echo "    IdentityFile ~/.ssh/jumpserver_key"
+	        echo "    CertificateFile $cert_file"
+	        echo ""
+	    } >> "$user_ssh_config"
+	    echo "Added $server_name to SSH config."
+	else
+	    echo "Host $server_name already exists in SSH config. Skipping."
+	fi
 
 
         
