@@ -4,6 +4,7 @@
 bash server/add_server.sh --description="op mejl server" --name="mail" --ip=185.119.XX.XX --password="XXXXX" --users=stefan,stefan2
 '
 
+chmod +x cli.py
 
 log_collector() {
 
