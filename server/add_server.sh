@@ -121,33 +121,73 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+
+get_server_ipv4(){
+	# list of ip servers for checks
+	IP_SERVER_1="https://ip.openpanel.com"
+	IP_SERVER_2="https://ipv4.openpanel.com"
+	IP_SERVER_3="https://ifconfig.me"
+
+	master_ip=$(curl --silent --max-time 2 -4 $IP_SERVER_1 || wget --inet4-only --timeout=2 -qO- $IP_SERVER_2 || curl --silent --max-time 2 -4 $IP_SERVER_3)
+
+	if [ -z "$master_ip" ]; then
+	    master_ip=$(ip addr|grep 'inet '|grep global|head -n1|awk '{print $2}'|cut -f1 -d/)
+	fi
+ }
+
+
+jail_all_users_on_remote() {
 # jail the remote user!
-ssh -p "$ssh_port" -o StrictHostKeyChecking=no  -i $private_key_file "$ssh_user@$server_ip"  << EOF
-sudo wget --no-verbose -O /usr/local/bin/restricted_command.sh https://raw.githubusercontent.com/stefanpejcic/openjumpserver/refs/heads/main/behind-jumserver/restricted_command.sh
-chmod +x /usr/local/bin/restricted_command.sh
-sudo chattr +i /usr/local/bin/restricted_command.sh
+ssh -p "$ssh_port" -o StrictHostKeyChecking=no -i "$private_key_file" "$ssh_user@$server_ip" << EOF
+set -e
 
-sudo bash -c 'cat >> /etc/ssh/sshd_config << EOL
+SCRIPT_PATH="/usr/local/bin/restricted_command.sh"
+MASTER_IP="$master_ip"
 
-##### 🦘 Kangaroo SSH JumpServer #####
-Match User '"$ssh_user"'
-    ForceCommand /usr/local/bin/restricted_command.sh
-EOL'
+# Download restricted command script if not present
+if [ ! -f "\$SCRIPT_PATH" ]; then
+    sudo wget --no-verbose -O "\$SCRIPT_PATH" https://raw.githubusercontent.com/stefanpejcic/openjumpserver/refs/heads/main/behind-jumserver/restricted_command.sh
+    sudo chmod +x "\$SCRIPT_PATH"
+    sudo chattr +i "\$SCRIPT_PATH"
+fi
 
-sudo systemctl restart sshd >/dev/null
+# Add ForceCommand only if not already added
+SSH_CONFIG_BLOCK="##### 🦘 Kangaroo SSH JumpServer #####"
+SSH_CONFIG_MATCH="Match User $ssh_user"
+if ! grep -q "\$SSH_CONFIG_MATCH" /etc/ssh/sshd_config; then
+    sudo bash -c "cat >> /etc/ssh/sshd_config << EOL
 
-sudo bash -c 'cat >> /etc/rsyslog.conf << EOL
-##### 🦘 Kangaroo SSH JumpServer #####
-*.* @server-a-ip-address:514
-EOL'
+\$SSH_CONFIG_BLOCK
+\$SSH_CONFIG_MATCH
+    ForceCommand \$SCRIPT_PATH
+EOL"
+    sudo systemctl restart sshd >/dev/null
+fi
 
-sudo systemctl restart rsyslog >/dev/null
+# Add rsyslog forwarding only if not already added
+RSYSLOG_LINE="*.* @\${MASTER_IP}:514"
+if ! grep -qF "\$RSYSLOG_LINE" /etc/rsyslog.conf; then
+    sudo bash -c "cat >> /etc/rsyslog.conf << EOL
+
+\$SSH_CONFIG_BLOCK
+\$RSYSLOG_LINE
+EOL"
+    sudo systemctl restart rsyslog >/dev/null
+fi
+
 EOF
 
 if [ $? -ne 0 ]; then
-    echo "Error running commands on remote server."
+    echo "❌ Error running commands on remote server."
     exit 1
 fi
+}
+
+# MAIN
+
+get_server_ipv4
+jail_all_users_on_remote
+
 
 
 
@@ -171,6 +211,8 @@ fi
     echo "    CertificateFile $cert_file"
     echo ""
 } >> "$user_ssh_config"
+
+
 
 
 add_ssh_kagaroo_for_user() {
