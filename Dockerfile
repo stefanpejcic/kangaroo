@@ -23,7 +23,11 @@ RUN echo '##### 🦘 Kangaroo SSH JumpServer #####\n\
 module(load="imudp")\n\
 input(type="imudp" port="514")\n\
 module(load="imtcp")\n\
-input(type="imtcp" port="514")' >> /etc/rsyslog.conf \
+input(type="imtcp" port="514")\n\
+' >> /etc/rsyslog.conf
+
+
+
  && mkdir -p /var/log/remote \
  && chown syslog:adm /var/log/remote \
  && echo '##### 🦘 Kangaroo SSH JumpServer #####\n\
@@ -41,4 +45,4 @@ Match User *,!root\n\
 EXPOSE 22 514/udp 514/tcp
 
 # Start both sshd and rsyslog
-CMD rsyslogd && /usr/sbin/sshd -D
+CMD mkdir -p /run/sshd && rsyslogd && /usr/sbin/sshd -D
