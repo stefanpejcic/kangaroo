@@ -25,7 +25,6 @@ input(type="imudp" port="514")\n\
 module(load="imtcp")\n\
 input(type="imtcp" port="514")' >> /etc/rsyslog.conf \
  && mkdir -p /var/log/remote \
- && chown syslog:adm /var/log/remote \
  && echo '##### 🦘 Kangaroo SSH JumpServer #####\n\
 $template RemoteLog,"/var/log/remote/%HOSTNAME%.log"\n\
 *.* ?RemoteLog\n\
