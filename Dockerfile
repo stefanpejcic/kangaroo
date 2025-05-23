@@ -41,4 +41,4 @@ Match User *,!root\n\
 EXPOSE 22 514/udp 514/tcp
 
 # Start both sshd and rsyslog
-CMD service rsyslog start && /usr/sbin/sshd -D
+CMD rsyslogd && /usr/sbin/sshd -D
