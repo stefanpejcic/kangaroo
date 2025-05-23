@@ -146,33 +146,33 @@ MASTER_IP="$master_ip"
 
 # Download restricted command script if not present
 if [ ! -f "\$SCRIPT_PATH" ]; then
-    sudo wget --no-verbose -O "\$SCRIPT_PATH" https://raw.githubusercontent.com/stefanpejcic/openjumpserver/refs/heads/main/behind-jumserver/restricted_command.sh
-    sudo chmod +x "\$SCRIPT_PATH"
-    sudo chattr +i "\$SCRIPT_PATH"
+    wget --no-verbose -O "\$SCRIPT_PATH" https://raw.githubusercontent.com/stefanpejcic/openjumpserver/refs/heads/main/behind-jumserver/restricted_command.sh
+    chmod +x "\$SCRIPT_PATH"
+    chattr +i "\$SCRIPT_PATH"
 fi
 
 # Add ForceCommand only if not already added
 SSH_CONFIG_BLOCK="##### 🦘 Kangaroo SSH JumpServer #####"
 SSH_CONFIG_MATCH="Match User $ssh_user"
 if ! grep -q "\$SSH_CONFIG_MATCH" /etc/ssh/sshd_config; then
-    sudo bash -c "cat >> /etc/ssh/sshd_config << EOL
+    bash -c "cat >> /etc/ssh/sshd_config << EOL
 
 \$SSH_CONFIG_BLOCK
 \$SSH_CONFIG_MATCH
     ForceCommand \$SCRIPT_PATH
 EOL"
-    sudo systemctl restart ssh >/dev/null
+    systemctl restart ssh >/dev/null
 fi
 
 # Add rsyslog forwarding only if not already added
 RSYSLOG_LINE="*.* @\${MASTER_IP}:514"
 if ! grep -qF "\$RSYSLOG_LINE" /etc/rsyslog.conf; then
-    sudo bash -c "cat >> /etc/rsyslog.conf << EOL
+    bash -c "cat >> /etc/rsyslog.conf << EOL
 
 \$SSH_CONFIG_BLOCK
 \$RSYSLOG_LINE
 EOL"
-    sudo systemctl restart rsyslog >/dev/null
+    systemctl restart rsyslog >/dev/null
 fi
 
 EOF
