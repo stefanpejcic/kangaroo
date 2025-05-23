@@ -14,6 +14,18 @@ Currently only Ubuntu is supported.
 
 ## Install
 
+docker:
+```
+docker run -d \
+  --name kangaroo \
+  -p 2222:22 \
+  -p 514:514/udp \
+  -p 514:514/tcp \
+  -v kangaroo_logs:/var/log/remote \
+  kangaroo:latest
+```
+
+standalone:
 ```
 git clone https://github.com/stefanpejcic/kangaroo/ && bash kangaroo/install.sh
 ```
