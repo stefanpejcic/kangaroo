@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
     fzf \
     && rm -rf /var/lib/apt/lists/*
 
-RUN git clone https://github.com/stefanpejcic/kangaroo.git /opt/kangaroo
+COPY . /opt/kangaroo
 
 RUN chmod +x /opt/kangaroo/install.sh
 
