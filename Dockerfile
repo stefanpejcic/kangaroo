@@ -10,11 +10,35 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 COPY . /opt/kangaroo
+WORKDIR /opt/kangaroo
 
-RUN chmod +x /opt/kangaroo/install.sh
+RUN chmod +x cli.py \
+ && chmod a+x server/client.sh \
+ && mkdir -p server/logs \
+ && touch server/logs/ssh_login.log \
+ && chmod 666 server/logs/ssh_login.log
+ 
+# Configure rsyslog
+RUN echo '##### 🦘 Kangaroo SSH JumpServer #####\n\
+module(load="imudp")\n\
+input(type="imudp" port="514")\n\
+module(load="imtcp")\n\
+input(type="imtcp" port="514")' >> /etc/rsyslog.conf \
+ && mkdir -p /var/log/remote \
+ && chown syslog:adm /var/log/remote \
+ && echo '##### 🦘 Kangaroo SSH JumpServer #####\n\
+$template RemoteLog,"/var/log/remote/%HOSTNAME%.log"\n\
+*.* ?RemoteLog\n\
+& ~' > /etc/rsyslog.d/remote.conf
 
-RUN bash /opt/kangaroo/install.sh
+# Restrict SSH access to run client.sh
+RUN echo '##### 🦘 Kangaroo SSH JumpServer #####\n\
+#PubkeyAuthentication yes\n\
+AuthorizedKeysFile .ssh/authorized_keys\n\
+Match User *,!root\n\
+    ForceCommand /opt/kangaroo/server/client.sh' >> /etc/ssh/sshd_config
 
-EXPOSE 22
+EXPOSE 22 514/udp 514/tcp
 
-CMD ["/usr/sbin/sshd", "-D"]
+# Start both sshd and rsyslog
+CMD service rsyslog start && /usr/sbin/sshd -D
