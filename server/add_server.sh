@@ -164,6 +164,19 @@ EOL"
     systemctl restart ssh >/dev/null
 fi
 
+
+fi
+
+EOF
+
+if [ $? -ne 0 ]; then
+    echo "❌ Error running commands on remote server."
+    exit 1
+fi
+
+
+
+: '
 # Add rsyslog forwarding only if not already added
 RSYSLOG_LINE="*.* @\${MASTER_IP}:514"
 if ! grep -qF "\$RSYSLOG_LINE" /etc/rsyslog.conf; then
@@ -173,14 +186,8 @@ if ! grep -qF "\$RSYSLOG_LINE" /etc/rsyslog.conf; then
 \$RSYSLOG_LINE
 EOL"
     systemctl restart rsyslog >/dev/null
-fi
+'
 
-EOF
-
-if [ $? -ne 0 ]; then
-    echo "❌ Error running commands on remote server."
-    exit 1
-fi
 }
 
 
