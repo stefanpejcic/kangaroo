@@ -12,7 +12,7 @@ log_command() {
 # Check if a command was passed
 if [ $# -eq 0 ]; then
     echo "No command specified."
-    exit 1
+    #exit 1
 fi
 
 log_command "$@"
