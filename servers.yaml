@@ -1,0 +1,11 @@
+- name: webserver
+  user: alice
+  host: 10.0.0.10
+
+- name: database
+  user: alice
+  host: 10.0.0.11
+
+- name: devbox
+  user: alice
+  host: 192.168.1.50
