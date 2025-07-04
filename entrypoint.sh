@@ -23,7 +23,8 @@ for user in config.get("users", []):
 
     subprocess.run(["useradd", "-ms", "/bin/bash", username])
     subprocess.run(["bash", "-c", f"echo '{username}:{password}' | chpasswd"])
-
+    subprocess.run(["chsh", "-s", "/usr/local/bin/connect-to", username])
+    
     os.makedirs(f"{home_dir}/.ssh", exist_ok=True)
     if ssh_key:
         with open(f"{home_dir}/.ssh/authorized_keys", "w") as ak:
@@ -41,3 +42,15 @@ EOF
 
 # Start SSH daemon
 exec /usr/sbin/sshd -D
+
+#!/bin/bash
+
+CONFIG_FILE="/etc/users.conf"
+
+# Create users as before (your existing python snippet)
+python3 /usr/local/bin/setup-users.py
+
+# Start sshd
+exec /usr/sbin/sshd -D
+
+
