@@ -6,7 +6,7 @@ RUN apt update && \
 # Create SSH config folders
 RUN mkdir /var/run/sshd && chmod 755 /var/run/sshd
 
-RUN rm -f /etc/update-motd.d/* \
+RUN rm -f /etc/update-motd.d/* /etc/legal \
  && sed -i 's/^PrintMotd yes/PrintMotd no/' /etc/ssh/sshd_config \
  && sed -i 's/^session optional pam_motd.so/#&/' /etc/pam.d/sshd
 
