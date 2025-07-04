@@ -43,14 +43,3 @@ EOF
 # Start SSH daemon
 exec /usr/sbin/sshd -D
 
-#!/bin/bash
-
-CONFIG_FILE="/etc/users.conf"
-
-# Create users as before (your existing python snippet)
-python3 /usr/local/bin/setup-users.py
-
-# Start sshd
-exec /usr/sbin/sshd -D
-
-
