@@ -8,7 +8,7 @@ RUN mkdir /var/run/sshd && chmod 755 /var/run/sshd
 
 # Copy setup script
 COPY entrypoint.sh /entrypoint.sh
-COPY connect-to-wrapper.py /usr/local/bin/connect-to
+COPY connect-to.sh /usr/local/bin/connect-to
 RUN chmod +x /entrypoint.sh /usr/local/bin/connect-to
 
 # Default command
