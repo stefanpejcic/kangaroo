@@ -9,20 +9,3 @@ SSH jumpserver - **not** for production use.
 4. The user logs in via SSH to the container.
 5. Upon login, the user can select any server listed in their `servers.yml` file.
 6. An SSH connection is then established to the selected remote server.
-
-## Install
-
-docker:
-
-```
-git clone --branch containerssh https://github.com/stefanpejcic/kangaroo.git && \
-docker build kangaroo/. -t kangaroo:latest.
-```
-
-```
-docker run -d \
-  --name kangaroo \
-  -v ./users.conf:/etc/users.conf:ro \
-  -p 2222:22 \
-  kangaroo:latest
-```
