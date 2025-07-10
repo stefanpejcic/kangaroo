@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CONFIG_FILE="/etc/users.conf"
+CONFIG_FILE="/users.conf"
 
 log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') [ENTRYPOINT] $*"
