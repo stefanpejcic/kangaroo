@@ -1,0 +1,21 @@
+services:
+  kangarpo:
+    build: .
+    container_name: kangaroo
+    ports:
+      - "2222:22"
+    volumes:
+      - ./users.yml:/users.yml:ro
+      - ./home:/home
+      - ./entrypoint.sh:/entrypoint.sh:ro
+      - ./connect-to.sh:/usr/local/bin/connect-to:ro
+    tty: true
+    stdin_open: true
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    pids_limit: 100
+    security_opt:
+      - no-new-privileges:true
