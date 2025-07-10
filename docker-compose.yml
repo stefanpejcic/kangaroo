@@ -19,3 +19,10 @@ services:
     pids_limit: 100
     security_opt:
       - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "22"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
