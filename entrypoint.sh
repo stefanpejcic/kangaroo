@@ -24,7 +24,9 @@ for user in config.get("users", []):
     ssh_key = user.get("ssh_key")
     user_servers_names = user.get("servers", [])
     home_dir = f"/home/{username}"
-
+    email = user.get("email", "") # not used yet
+    code = user.get("code", "")
+    
     # Check if user exists
     try:
         pwd.getpwnam(username)
@@ -48,6 +50,15 @@ for user in config.get("users", []):
 
     # Collect user's allowed server details
     user_servers = {name: all_servers[name] for name in user_servers_names if name in all_servers}
+
+
+    # Write code
+    if code:
+        code_path = os.path.join(home_dir, "code")
+        with open(code_path, "w") as cf:
+            cf.write(code + "\n")
+        os.chown(code_path, uid, gid)
+        os.chmod(code_path, 0o600)
 
     user_config_path = os.path.join(home_dir, "servers.yaml")
     with open(user_config_path, "w") as f:
