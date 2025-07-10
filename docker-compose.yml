@@ -5,7 +5,7 @@ services:
     ports:
       - "2222:22"
     volumes:
-      - ./users.yml:/users.yml:ro
+      - ./users.conf:/users.conf:ro
       - ./home:/home
       - ./entrypoint.sh:/entrypoint.sh:ro
       - ./connect-to.sh:/usr/local/bin/connect-to:ro
