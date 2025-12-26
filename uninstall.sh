@@ -67,4 +67,5 @@ remove_logs
 uninstall_fzf
 remove_for_all_users
 remove_git_dir
+rm -rf /usr/local/bin/kangaroo
 echo "✅ Uninstallation complete."
