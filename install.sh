@@ -14,18 +14,8 @@ if [[ "$SCRIPT_DIR" == /root* ]]; then
     exit 1
 fi
 
-
 CLI_PATH="$SCRIPT_DIR/cli.py"
-ALIAS_NAME="kangaroo"
-BASHRC="$HOME/.bashrc"
-
-{
-    echo ""
-    echo "# 🦘 Kangaroo CLI alias"
-    echo "alias $ALIAS_NAME='python3 \"$CLI_PATH\"'"
-} >> "$BASHRC"
-
-source ~/.bashrc
+ln -s $CLI_PATH /usr/local/bin/kangaroo
 
 
 log_collector() {
