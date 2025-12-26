@@ -1,10 +1,32 @@
 #!/bin/bash
 
 : '
+to add slave servers:
 bash server/add_server.sh --description="op mejl server" --name="mail" --ip=185.119.XX.XX --password="XXXXX" --users=stefan,stefan2
 '
 
-chmod +x cli.py
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+if [[ "$SCRIPT_DIR" == /root* ]]; then
+    echo "[ERROR] Do not install Kangaroo from /root/ or any of its subdirectories."
+    echo "Users can not access /root/ - instead install in /home/ or other shared location."
+    exit 1
+fi
+
+
+CLI_PATH="$SCRIPT_DIR/cli.py"
+ALIAS_NAME="kangaroo"
+BASHRC="$HOME/.bashrc"
+
+{
+    echo ""
+    echo "# 🦘 Kangaroo CLI alias"
+    echo "alias $ALIAS_NAME='python3 \"$CLI_PATH\"'"
+} >> "$BASHRC"
+
+source ~/.bashrc
+
 
 log_collector() {
 
@@ -47,22 +69,12 @@ clear
 
 
 
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [[ "$SCRIPT_DIR" == /root* ]]; then
-    echo "❌ Do not install Kangaroo from /root/ or any of its subdirectories."
-    echo "Users can not access /root/ - instead install in /home/ or other shared location."
-    exit 1
-fi
-
 if ! command -v fzf >/dev/null 2>&1; then
     echo "Installing fzf..."
     apt update -qq >/dev/null && apt install -y -qq fzf >/dev/null
     echo "fzf installed successfully."
     clear
 fi
-
-CONFIG_FILE="$SCRIPT_DIR/jump_servers.conf"
 
 chmod a+x "${SCRIPT_DIR}/server/client.sh"
 mkdir -p "${SCRIPT_DIR}/server/logs"
@@ -88,4 +100,7 @@ fi
 
 
 echo "🦘 Kangaroo SSH JumpServer is installed!"
+echo
+echo "" 
+echo
 exit 0
