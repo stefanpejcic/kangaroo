@@ -1,15 +1,21 @@
 # Kangaroo SSH JumpServer 🦘
-Open source SSH jumpserver - **not** for production use.
 
-it will:
+A lightweight, open-source SSH Jumpserver for internal management.
 
-- from master copy ssh key to slave server and on it restrict users to `behind-jumserver/restricted_command.sh` script.
-- on master restrict user to `fzf` and allow them access to selected servers only.
+<details>
+  <summary><b>TL;DR</b></summary>
+  <p>Restricts shells on both the Master and the Slave nodes to ensure non-root users can only perform "jump" actions from Master to Slaves.</p>
+</details>
 
-User connects to MASTER then selects a slave server to jump to
+How it works:
 
+1. **Install on Master:** Run the installation script to restrict all non-root users to the [server/client.sh](https://github.com/stefanpejcic/kangaroo/blob/main/server/client.sh) menu interface.
+2. **Add Users:** [Create standard Linux system users](https://www.google.com/search?q=linux+create+user) on the Master node.
+3. **Link Slaves:** Use `kangaroo add-server` to register remote servers. This automatically configures the Slave to restrict incoming SSH users to the [behind-jumserver/restricted_command.sh](https://github.com/stefanpejcic/kangaroo/blob/main/behind-jumserver/restricted_command.sh) script.
 
+that's it! Users now simply SSH into the **Master**, where they are greeted by the fzf menu where they can view authorized servers and "jump" to them instantly.
 
+---
 
 ## Install
 
