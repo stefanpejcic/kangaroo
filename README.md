@@ -8,14 +8,21 @@ it will:
 
 User connects to MASTER then selects a slave server to jump to
 
-## Requirements
 
-Currently only Ubuntu is supported.
+
 
 ## Install
 
-docker:
-```
+
+<table>
+  <tr>
+    <th>Docker</th>
+    <th>Standalone (Ubuntu 24)</th>
+  </tr>
+  <tr>
+    <td>
+      
+```bash
 docker run -d \
   --name kangaroo \
   -p 2222:22 \
@@ -25,10 +32,17 @@ docker run -d \
   kangaroo:latest
 ```
 
-standalone:
+</td>
+<td>
+  
+```bash
+git clone https://github.com/stefanpejcic/kangaroo/ && \
+  bash kangaroo/install.sh
 ```
-git clone https://github.com/stefanpejcic/kangaroo/ && bash kangaroo/install.sh
-```
+
+</td></tr>
+</table>
+
 
 ---
 
