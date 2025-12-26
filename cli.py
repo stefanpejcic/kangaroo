@@ -347,4 +347,4 @@ def login_logs(head, lines, follow):
 
 
 if __name__ == "__main__":
-    cli()
+    cli(prog_name="kangaroo")
