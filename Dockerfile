@@ -13,6 +13,7 @@ COPY . /opt/kangaroo
 WORKDIR /opt/kangaroo
 
 RUN chmod +x cli.py \
+ && ln -s /opt/kangaroo/cli.py /usr/local/bin/kangaroo \
  && chmod a+x server/client.sh \
  && mkdir -p server/logs \
  && touch server/logs/ssh_login.log \
