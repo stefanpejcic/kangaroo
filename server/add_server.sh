@@ -1,10 +1,7 @@
 #!/bin/bash
 
-# Check if script is run as root
-if [[ $EUID -ne 0 ]]; then
-   echo "This script must be run as root" 
-   exit 1
-fi
+# Ensure root privileges
+[[ $EUID -ne 0 ]] && echo "Run as root" && exit 1
 
 # variables
 cert_file="/etc/ssh/ssh_host_rsa_key.pub"
