@@ -94,18 +94,19 @@ jail_all_users_on_remote() {
 set -e
 MASTER_IP="$master_ip"
 
-wget --no-verbose -O "/usr/local/bin/restricted_command.sh" https://raw.githubusercontent.com/stefanpejcic/openjumpserver/refs/heads/main/behind-jumserver/restricted_command.sh
-chmod +x "/usr/local/bin/restricted_command.sh" && chattr +i "/usr/local/bin/restricted_command.sh"
-
-echo -e "##### 🦘 Kangaroo SSH JumpServer #####\nMatch User $ssh_user\n    ForceCommand /usr/local/bin/restricted_command.sh" > /etc/ssh/sshd_config.d/999-kangaroo.conf
-systemctl restart ssh >/dev/null
-
 echo -e "##### 🦘 Kangaroo SSH JumpServer #####\n*.* @$MASTER_IP:514" >> /etc/rsyslog.d/999-kangaroo.conf
 systemctl restart rsyslog >/dev/null
 
 if command -v csf >/dev/null 2>&1; then
     csf -a "$MASTER_IP" "KangarooSSH JumpServer Master IP" >/dev/null
 fi
+
+wget --no-verbose -O "/usr/local/bin/restricted_command.sh" https://raw.githubusercontent.com/stefanpejcic/openjumpserver/refs/heads/main/behind-jumserver/restricted_command.sh
+chmod +x "/usr/local/bin/restricted_command.sh" && chattr +i "/usr/local/bin/restricted_command.sh"
+
+echo -e "##### 🦘 Kangaroo SSH JumpServer #####\nMatch User $ssh_user\n    ForceCommand /usr/local/bin/restricted_command.sh" > /etc/ssh/sshd_config.d/999-kangaroo.conf
+systemctl restart ssh >/dev/null
+
 EOF
 
     if [ $? -ne 0 ]; then
