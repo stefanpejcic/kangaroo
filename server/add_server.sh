@@ -92,42 +92,20 @@ jail_all_users_on_remote() {
 
 	ssh -p "$ssh_port" -o StrictHostKeyChecking=no -i "$private_key_file" "$ssh_user@$server_ip" << EOF
 set -e
-
-SCRIPT_PATH="/usr/local/bin/restricted_command.sh"
 MASTER_IP="$master_ip"
 
-if [ ! -f "\$SCRIPT_PATH" ]; then
-    wget --no-verbose -O "\$SCRIPT_PATH" https://raw.githubusercontent.com/stefanpejcic/openjumpserver/refs/heads/main/behind-jumserver/restricted_command.sh
-    chmod +x "\$SCRIPT_PATH" && chattr +i "\$SCRIPT_PATH"
-fi
+wget --no-verbose -O "/usr/local/bin/restricted_command.sh" https://raw.githubusercontent.com/stefanpejcic/openjumpserver/refs/heads/main/behind-jumserver/restricted_command.sh
+chmod +x "/usr/local/bin/restricted_command.sh" && chattr +i "/usr/local/bin/restricted_command.sh"
 
-cat > /etc/ssh/sshd_config.d/999-kangaroo.conf <<EOL
-##### 🦘 Kangaroo SSH JumpServer #####
-Match User $ssh_user
-    ForceCommand /usr/local/bin/restricted_command.sh
-EOL
-
+echo -e "##### 🦘 Kangaroo SSH JumpServer #####\nMatch User $ssh_user\n    ForceCommand /usr/local/bin/restricted_command.sh" > /etc/ssh/sshd_config.d/999-kangaroo.conf
 systemctl restart ssh >/dev/null
 
-
-
-RSYSLOG_LINE="*.* @\${MASTER_IP}:514"
-if ! grep -qF "\$RSYSLOG_LINE" /etc/rsyslog.conf; then
-    bash -c "cat >> /etc/rsyslog.conf << EOL
-
-\$SSH_CONFIG_BLOCK
-\$RSYSLOG_LINE
-EOL"
-    systemctl restart rsyslog >/dev/null
-fi
-
+echo -e "##### 🦘 Kangaroo SSH JumpServer #####\n*.* @$MASTER_IP:514" >> /etc/rsyslog.d/999-kangaroo.conf
+systemctl restart rsyslog >/dev/null
 
 if command -v csf >/dev/null 2>&1; then
-    echo "CSF detected on slave server. Adding \$MASTER_IP to allow list..."
-    csf -a "\$MASTER_IP" "KangarooSSH JumpServer Master IP" || true
-    csf -r || true
+    csf -a "$MASTER_IP" "KangarooSSH JumpServer Master IP" >/dev/null
 fi
-
 EOF
 
     if [ $? -ne 0 ]; then
