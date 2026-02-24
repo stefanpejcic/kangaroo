@@ -38,10 +38,9 @@ if ! grep -q 'Kangaroo SSH JumpServer' /etc/rsyslog.d/remote.conf; then
 echo "Configuring logs from slave servers.."
 
   cat << EOF >> /etc/rsyslog.d/remote.conf
-##### 🦘 Kangaroo SSH JumpServer #####
-$template RemoteLog,"/var/log/remote/%HOSTNAME%.log"
-*.* ?RemoteLog
-& ~
+##### Kangaroo SSH JumpServer #####
+template(name="RemoteLog" type="string" string="/var/log/remote/%HOSTNAME%.log")
+*.* action(type="omfile" dynaFile="RemoteLog")
 EOF
 fi
 
