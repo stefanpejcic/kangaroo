@@ -14,7 +14,7 @@ trap '' SIGINT SIGTERM SIGTSTP
 ssh_config="$HOME/.ssh/config"
 
 if [ ! -f "$ssh_config" ]; then
-    echo "No servers configured for user. Aborting."
+    echo "No config file exists. Aborting."
     exit 1
 fi
 
@@ -29,7 +29,7 @@ raw_servers=$(awk '
 ' "$ssh_config")
 
 if [[ -z "$raw_servers" ]]; then
-    echo "No servers configured. Aborting."
+    echo "No servers configured for your account. Aborting."
     exit 1
 fi
 
@@ -37,26 +37,23 @@ draw_banner() {
     local width=$(tput cols)
     local line=$(printf '━%.0s' $(seq 1 $width))
     echo -e "\e[1;34m$line\e[0m"
-    echo -e "  \e[1m🦘 Kangaroo SSH\e[0m"
+    echo -e "  \e[1m🦘 Kangaroo SSH JumpServer\e[0m"
     echo -e "  https://github.com/stefanpejcic/kangaroo"
+    echo ""
+    echo -e "  \e[1mChoose a server from the list below or type to search.\e[0m"
     echo -e "\e[1;34m$line\e[0m"
 }
 
 while true; do
-# Get current terminal width
     term_width=$(tput cols)
-    
-    # Define column widths (percentages)
     col1_w=$(( term_width * 25 / 100 ))
     col2_w=$(( term_width * 25 / 100 ))
-    col3_w=$(( term_width - col1_w - col2_w - 5 )) # Remaining space
+    col3_w=$(( term_width - col1_w - col2_w - 5 ))
 
-    # 2. Manually format the rows to fill the terminal width
     formatted_list=$(echo "$raw_servers" | while IFS="|" read -r name ip desc; do
         printf "%-${col1_w}s %-${col2_w}s %-${col3_w}s\n" "$name" "$ip" "$desc"
     done)
 
-    # Create the aligned header
     header_row=$(printf "\e[1;37m%-${col1_w}s %-${col2_w}s %-${col3_w}s\e[0m" "NAME" "IP" "DESCRIPTION")
     full_header="$(draw_banner)\n$header_row\n"
 
@@ -69,8 +66,7 @@ while true; do
             --info inline \
             --color="header:bold:blue,prompt:bold:yellow,pointer:bold:red" \
             --prompt="Search Host > ")
-        
-    # If the user presses Esc or Ctrl+C in fzf, exit
+
     if [[ -z "$selection" ]]; then
         echo "Exiting..."
         exit 0
