@@ -310,14 +310,15 @@ def add_server(description, name, ip, user, port, password, users):
 @click.option('--head', is_flag=True, help='Show first lines instead of last')
 @click.option('--lines', default=10, show_default=True, help='Number of lines to show')
 @click.option('--follow', is_flag=True, help='Follow the log file (like tail -f)')
-def login_logs(head, lines, follow):
+@click.option('--search', help='Filter logs by username, IP or action')
+def login_logs(head, lines, follow, search):
     """
     Show ssh login logs.
     """
-    log_path = './server/logs/ssh_login.log'
+    log_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'server', 'logs', 'ssh_login.log')
 
     if not os.path.isfile(log_path):
-        click.echo(f"No logs yet.")
+        click.echo("No logs yet.")
         return
 
     if follow and head:
@@ -337,7 +338,11 @@ def login_logs(head, lines, follow):
     try:
         with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) as proc:
             for line in proc.stdout:
-                click.echo(line, nl=False)
+                if search:
+                    if search in line:
+                        click.echo(line, nl=False)
+                else:
+                    click.echo(line, nl=False)
             proc.wait()
             if proc.returncode != 0:
                 err = proc.stderr.read()
