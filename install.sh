@@ -15,6 +15,7 @@ if [[ "$SCRIPT_DIR" == /root* ]]; then
 fi
 
 CLI_PATH="$SCRIPT_DIR/cli.py"
+chmod +x $CLI_PATH
 ln -s $CLI_PATH /usr/local/bin/kangaroo
 
 
