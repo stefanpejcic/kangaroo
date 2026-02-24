@@ -85,7 +85,7 @@ jail_all_users_on_remote() {
 
     master_ip=$(curl -s https://ip.openpanel.com)
 
-ssh -p "$ssh_port" -o StrictHostKeyChecking=no -i "$private_key_file" "$ssh_user@$server_ip" << EOF
+	ssh -q -p "$ssh_port" -o StrictHostKeyChecking=no -o LogLevel=ERROR -i "$private_key_file" "$ssh_user@$server_ip" << EOF
 set -e
 
 SCRIPT_PATH="/usr/local/bin/restricted_command.sh"
