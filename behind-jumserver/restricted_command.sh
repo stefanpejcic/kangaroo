@@ -8,7 +8,7 @@ log_command() {
     logger -t "$LOG_TAG" "[$timestamp] User: $(whoami) Command: $*"
 }
 
-disabled_commands=("rm" "shutdown" "reboot" "--delete")
+disabled_commands=("rm" "shutdown" "reboot" "--delete" "mkfs"  "dd")
 
 while true; do
     read -ep "$(whoami)@$(hostname):~$ " user_cmd || break
