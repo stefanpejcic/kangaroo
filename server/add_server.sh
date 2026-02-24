@@ -173,7 +173,7 @@ setup_ssh_access() {
     if [ -f "$cert_file" ]; then
         echo "Setting up SSH access for user $user"
         add_ssh_kagaroo_for_user "$user"
-        echo "command=\"ssh -i $cert_file -p $ssh_port $ssh_user@$server_ip\" $cert_file" >> "$authorized_keys_file"
+        #echo "command=\"ssh -i $cert_file -p $ssh_port $ssh_user@$server_ip\" $cert_file" >> "$authorized_keys_file"
         chown "$user:$user" "$authorized_keys_file" "$user_home_dir/.ssh/jumpserver_key"
         chmod 600 "$authorized_keys_file" "$user_home_dir/.ssh/jumpserver_key"
 
