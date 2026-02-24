@@ -1,19 +1,21 @@
 #!/bin/bash
 
-# Ensure root privileges
 [[ $EUID -ne 0 ]] && echo "Run as root" && exit 1
 
-# variables
+if ! command -v sshpass >/dev/null 2>&1; then
+    echo "sshpass not found. Installing..."
+    apt update -qq >/dev/null && apt install -y -qq sshpass >/dev/null
+    echo "sshpass installed successfully."
+fi
+
 cert_file="/etc/ssh/ssh_host_rsa_key.pub"
 private_key_file="/etc/ssh/ssh_host_rsa_key"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_FILE="$SCRIPT_DIR/jump_servers.conf"
 ssh_user="root" #maybe?
 ssh_port=22
-ssh_password=""
 selected_users=""
 
-# Parse long options
 for arg in "$@"; do
     case $arg in
         --description=*) server_description="${arg#*=}" ;;
@@ -25,8 +27,6 @@ for arg in "$@"; do
         --users=*)       selected_users="${arg#*=}"     ;;
     esac
 done
-
-
 
 # Prompts
 [[ -z "$server_description" ]] && read -p "Description: " server_description
@@ -43,45 +43,30 @@ if [[ -z "$ssh_port" ]]; then
   ssh_port=${ssh_port:-22}
 fi
 
-
-# Add server to a configuration file
-if [ ! -f "$CONFIG_FILE" ]; then
-    touch "$CONFIG_FILE"
-    chmod 600 "$CONFIG_FILE"
-fi
-
-
-# Copy the certificate to the new server's authorized keys
-echo "Copying SSH certificate to the new server..."
-
-if [[ -z "$server_description" ]]; then
+if [[ -z "$ssh_password" ]]; then
    echo "Insert password for $ssh_user@$server_ip:$ssh_port"
    read -r USERPASS
 else
    USERPASS="$ssh_password"
 fi
 
-# check first
-if ! command -v sshpass >/dev/null 2>&1; then
-    echo "sshpass not found. Installing..."
-    apt update -qq >/dev/null && apt install -y -qq sshpass >/dev/null
-    echo "sshpass installed successfully."
-fi
+# ======================================================================
+# Functions
 
-# run!
-timeout 15s bash -c "echo \"$USERPASS\" | sshpass ssh-copy-id -p \"$ssh_port\" -o StrictHostKeyChecking=no -f -i \"$cert_file\" \"$ssh_user@$server_ip\"" >/dev/null 2>&1
-
-if [ $? -ne 0 ]; then
-    echo "Error copying SSH key to remote server."
-    echo "Please try manually with the following command:"
-    echo "sshpass -p '$USERPASS' ssh-copy-id -p $ssh_port -o StrictHostKeyChecking=no -i $cert_file $ssh_user@$server_ip"
-    exit 1
-fi
-
+test_ssh_connection() {
+	echo "Copying SSH certificate to the new server..."
+	timeout 15s bash -c "echo \"$USERPASS\" | sshpass ssh-copy-id -p \"$ssh_port\" -o StrictHostKeyChecking=no -f -i \"$cert_file\" \"$ssh_user@$server_ip\"" >/dev/null 2>&1
+	if [ $? -ne 0 ]; then
+	    echo "Error copying SSH key to remote server."
+	    echo "Please try manually with the following command:"
+	    echo "sshpass -p '$USERPASS' ssh-copy-id -p $ssh_port -o StrictHostKeyChecking=no -i $cert_file $ssh_user@$server_ip"
+	    exit 1
+	fi
+}
 
 jail_all_users_on_remote() {
-# jail the remote user!
-ssh -p "$ssh_port" -o StrictHostKeyChecking=no -i "$private_key_file" "$ssh_user@$server_ip" << EOF
+	master_ip=$(curl -s https://ip.openpanel.com)
+	ssh -p "$ssh_port" -o StrictHostKeyChecking=no -i "$private_key_file" "$ssh_user@$server_ip" << EOF
 set -e
 
 SCRIPT_PATH="/usr/local/bin/restricted_command.sh"
@@ -107,7 +92,6 @@ EOL"
     systemctl restart ssh >/dev/null
 fi
 
-
 fi
 
 EOF
@@ -116,8 +100,6 @@ if [ $? -ne 0 ]; then
     echo "FATAL ERROR running commands on remote server."
     exit 1
 fi
-
-
 
 : '
 # Add rsyslog forwarding only if not already added
@@ -133,41 +115,16 @@ EOL"
 
 }
 
-
-
-
-
-
-# MAIN
-
-master_ip=$(curl -s https://ip.openpanel.com)
-jail_all_users_on_remote
-
-
-
-
 add_ssh_kagaroo_for_user() {
     local user=$1
-    if [ "$user" == "root" ]; then
-        return
-    fi
-    
+    [[ "$user" == "root" ]] && return
+
     user_home_dir="$(eval echo ~$user)"
+	user_ssh_config="$user_home_dir/.ssh/config"
+	
+	install -d -m 700 -o "$user" -g "$user" "$user_home/.ssh"
+	install -m 600 -o "$user" -g "$user" /dev/null "$user_ssh_config"
 
-    # Ensure .ssh directory exists
-    mkdir -p "$user_home_dir/.ssh"
-    
-    chmod 700 "$user_home_dir/.ssh"
-
-    user_ssh_config="$user_home_dir/.ssh/config"
-
-	# Ensure the user has an SSH config file
-	if [ ! -f "$user_ssh_config" ]; then
-	    touch "$user_ssh_config"
-	    chmod 600 "$user_ssh_config"
-	fi
-
-	# add for root
 	{
 	    echo "# Description: $server_description"
 	    echo "Host $server_name"
@@ -180,15 +137,8 @@ add_ssh_kagaroo_for_user() {
 	} >> "$user_ssh_config"
 	
 	chown -R "$user:$user" "$user_home_dir/.ssh"
-
-
-    # Create symlink to the SSH key if it doesn't already exist
     local ssh_key_link="$user_home_dir/.ssh/jumpserver_key"
-    if [ ! -L "$ssh_key_link" ]; then
-        ln -s "$private_key_file" "$ssh_key_link" >/dev/null 2>&1
-    fi
-
-    # Add entries to .bash_profile only if they don't already exist
+	ln -sfT "$private_key_file" "$ssh_key_link"
     local bash_profile="$user_home_dir/.bash_profile"
     touch "$bash_profile"
 
@@ -196,11 +146,9 @@ add_ssh_kagaroo_for_user() {
     grep -qxF "$HOME/kangaroo.sh" "$bash_profile" || echo "$HOME/kangaroo.sh" >> "$bash_profile"
     grep -qxF "logout" "$bash_profile" || echo "logout" >> "$bash_profile"
 
-    # Set ownership and permissions
     chown "$user:$user" "$bash_profile"
     chmod 700 "$bash_profile"
 }
-
 
 # Function to set up SSH certificate-based authentication for existing users
 setup_ssh_access() {
@@ -223,70 +171,58 @@ setup_ssh_access() {
         chown "$user:$user" "$authorized_keys_file" "$user_home_dir/.ssh/jumpserver_key"
         chmod 600 "$authorized_keys_file" "$user_home_dir/.ssh/jumpserver_key"
 
-	if ! grep -q "Host $server_name" "$user_ssh_config"; then
-	    {
-	        echo "# Description: $server_description"
-	        echo "Host $server_name"
-	        echo "    HostName $server_ip"
-	        echo "    User $ssh_user"
-	        echo "    Port $ssh_port"
-	        echo "    IdentityFile ~/.ssh/jumpserver_key"
-	        echo "    CertificateFile $cert_file"
-	        echo ""
-	    } >> "$user_ssh_config"
-	    echo "Added $server_name to SSH config."
-	else
-	    echo "Host $server_name already exists in SSH config. Skipping."
-	fi
-
-
-        
+		if ! grep -q "Host $server_name" "$user_ssh_config"; then
+		    {
+		        echo "# Description: $server_description"
+		        echo "Host $server_name"
+		        echo "    HostName $server_ip"
+		        echo "    User $ssh_user"
+		        echo "    Port $ssh_port"
+		        echo "    IdentityFile ~/.ssh/jumpserver_key"
+		        echo "    CertificateFile $cert_file"
+		        echo ""
+		    } >> "$user_ssh_config"
+		    echo "Added $server_name to SSH config."
+		else
+		    echo "Host $server_name already exists in SSH config. Skipping."
+		fi
     else
         echo "No SSH certificate found."
         exit 1
     fi
 }
 
+setup_ssh_for() {
+    local users="${*:-$(awk -F: '$7 ~ /(\/bin\/(bash|sh|zsh))$/ {print $1}' /etc/passwd)}"
 
-setup_for_all_users() {
-   existing_users=$(awk -F: '($7 == "/bin/bash" || $7 == "/bin/sh") {print $1}' /etc/passwd)
-       for user in $existing_users; do
-           setup_ssh_access "$user"
-       done
-}
-
-setup_for_some_users() {
-   users="$1"
-   for user in $users; do
-         if id "$user" &>/dev/null; then
+    for user in $users; do
+        if id "$user" &>/dev/null; then
             setup_ssh_access "$user"
-         else
-            echo "User $user does not exist."
-         fi
-   done
+        else
+            echo "User '$user' not found. Skipping..."
+        fi
+    done
 }
 
-# Set up SSH access for all existing users or specified users
+# ======================================================================
+# Main
+
+# 1. test SSH connection and cp certificate to the new server's authorized keys
+test_ssh_connection
+
+# 2. jail all on remote
+jail_all_users_on_remote
+
+# 3. set up SSH access for all existing users or specified users
 if [[ -z "$selected_users" ]]; then
-   read -p "Do you want to set up SSH access for all existing users? (y/n): " add_to_all
-   if [[ "$add_to_all" =~ ^[Yy]$ ]]; then
-      setup_for_all_users
-   else
-       read -p "Enter the usernames to setup SSH access for (space-separated): " specific_users
-       setup_for_some_users "$specific_users"
-   fi
-else
-   if [[ "$selected_users" == "all" ]]; then
-      setup_for_all_users
-   else
-      setup_for_some_users "$selected_users"
-   fi
+    read -p "Setup SSH for all existing users? (y/n): " add_to_all
+    [[ "$add_to_all" =~ ^[Yy]$ ]] && selected_users="all" || read -p "Enter usernames (space-separated): " selected_users
 fi
+setup_ssh_for ${selected_users:-all}
 
-
+# 4. save new server info
+mkdir -p $SCRIPT_DIR
+chmod 600 "$CONFIG_FILE"
 echo "$server_name $server_ip" >> "$CONFIG_FILE"
 
-#clear
 echo "Server $server_name ($server_ip:$ssh_port) added, and SSH access configured using certificates from Kangaroo 🦘"
-
-exit 0
