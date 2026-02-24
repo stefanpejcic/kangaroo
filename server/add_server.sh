@@ -97,7 +97,7 @@ if [ ! -f "\$SCRIPT_PATH" ]; then
     chmod +x "\$SCRIPT_PATH" && chattr +i "\$SCRIPT_PATH"
 fi
 
-cat > /etc/ssh/sshd_config.d/kangaroo.conf <<EOL
+cat > /etc/ssh/sshd_config.d/999-kangaroo.conf <<EOL
 ##### 🦘 Kangaroo SSH JumpServer #####
 Match User $ssh_user
     ForceCommand $SCRIPT_PATH
