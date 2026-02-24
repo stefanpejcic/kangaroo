@@ -99,7 +99,7 @@ fi
 cat > /etc/ssh/sshd_config.d/999-kangaroo.conf <<EOL
 ##### 🦘 Kangaroo SSH JumpServer #####
 Match User $ssh_user
-    ForceCommand $SCRIPT_PATH
+    ForceCommand /usr/local/bin/restricted_command.sh
 EOL
 
 systemctl restart ssh >/dev/null
