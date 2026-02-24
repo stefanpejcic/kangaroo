@@ -276,7 +276,7 @@ import subprocess
 @click.option('--users', default='', help='Comma-separated list of users to add server for')
 def add_server(description, name, ip, user, port, password, users):
     """Add a new server and assign it to users."""
-    script_path = os.path.join(os.path.dirname(__file__), 'server', 'add_server.sh')
+    script_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'server', 'add_server.sh')
     
     if not os.path.isfile(script_path):
         click.echo(f"Error: Script {script_path} not found.")
