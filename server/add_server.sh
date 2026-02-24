@@ -99,18 +99,6 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-: '
-# Add rsyslog forwarding only if not already added
-RSYSLOG_LINE="*.* @\${MASTER_IP}:514"
-if ! grep -qF "\$RSYSLOG_LINE" /etc/rsyslog.conf; then
-    bash -c "cat >> /etc/rsyslog.conf << EOL
-
-\$SSH_CONFIG_BLOCK
-\$RSYSLOG_LINE
-EOL"
-    systemctl restart rsyslog >/dev/null
-'
-
 }
 
 add_ssh_kagaroo_for_user() {
