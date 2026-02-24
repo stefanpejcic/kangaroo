@@ -15,15 +15,17 @@ while true; do
 
     [[ -z "$user_cmd" ]] && continue
 
-    log_command "$user_cmd"
-
+    blocked=false
     for cmd in "${disabled_commands[@]}"; do
         if [[ "$user_cmd" == *"$cmd"* ]]; then
             echo "Error: Command '$cmd' is disabled."
             log_command "[BLOCKED] Attempted blocked command: $cmd"
-            continue 2
+            blocked=true
+            break
         fi
     done
+    [[ "$blocked" == true ]] && continue
 
-    bash -c "$user_cmd"
+    log_command "$user_cmd"
+    eval "$user_cmd"
 done
