@@ -43,9 +43,6 @@ $template RemoteLog,"/var/log/remote/%HOSTNAME%.log"
 *.* ?RemoteLog
 & ~
 EOF
-
-clear
-
 fi
 
 
@@ -85,6 +82,9 @@ echo "Restarting SSH service.."
 sudo systemctl restart ssh
 clear
 fi
+
+
+log_collector
 
 
 echo "🦘 Kangaroo SSH JumpServer is installed! - please execute 'source ~/.bashrc'"
