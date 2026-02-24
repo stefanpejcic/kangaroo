@@ -54,14 +54,24 @@ fi
 # Functions
 
 test_ssh_connection() {
-	echo "Copying SSH certificate to the new server..."
-	timeout 15s bash -c "echo \"$USERPASS\" | sshpass ssh-copy-id -p \"$ssh_port\" -o StrictHostKeyChecking=no -f -i \"$cert_file\" \"$ssh_user@$server_ip\"" >/dev/null 2>&1
-	if [ $? -ne 0 ]; then
-	    echo "Error copying SSH key to remote server."
-	    echo "Please try manually with the following command:"
-	    echo "sshpass -p '$USERPASS' ssh-copy-id -p $ssh_port -o StrictHostKeyChecking=no -i $cert_file $ssh_user@$server_ip"
-	    exit 1
-	fi
+    echo "Copying SSH certificate to the new server..."
+    
+    output=$(timeout 15s bash -c "echo \"$USERPASS\" | sshpass ssh-copy-id -p \"$ssh_port\" -o StrictHostKeyChecking=no -f -i \"$cert_file\" \"$ssh_user@$server_ip\"" 2>&1)
+    status=$?
+
+    if [ $status -ne 0 ]; then
+        if echo "$output" | grep -q "All keys were skipped because they already exist"; then
+            echo "SSH key already exists on remote server. Proceeding..."
+        else
+            echo "Error copying SSH key to remote server."
+            echo "Details: $output"
+            echo "Please try manually with the following command:"
+            echo "sshpass -p '$USERPASS' ssh-copy-id -p $ssh_port -o StrictHostKeyChecking=no -i $cert_file $ssh_user@$server_ip"
+            exit 1
+        fi
+    else
+        echo "SSH key copied successfully."
+    fi
 }
 
 jail_all_users_on_remote() {
