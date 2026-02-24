@@ -14,10 +14,7 @@ if [[ "$SCRIPT_DIR" == /root* ]]; then
     exit 1
 fi
 
-CLI_PATH="$SCRIPT_DIR/cli.py"
-chmod +x $CLI_PATH
-ln -s $CLI_PATH /usr/local/bin/kangaroo
-
+echo 'alias kangaroo="python3 $SCRIPT_DIR/cli.py"' >> ~/.bashrc
 
 log_collector() {
 
@@ -90,7 +87,7 @@ clear
 fi
 
 
-echo "🦘 Kangaroo SSH JumpServer is installed!"
+echo "🦘 Kangaroo SSH JumpServer is installed! - please execute 'source ~/.bashrc'"
 echo
 echo "" 
 echo
