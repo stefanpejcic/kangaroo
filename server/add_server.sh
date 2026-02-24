@@ -156,7 +156,7 @@ add_ssh_kagaroo_for_user() {
     chmod 700 "$bash_profile"
 }
 
-# Function to set up SSH certificate-based authentication for existing users
+# Function to set up SSH certificate-based authentication for existing users on MASTER
 setup_ssh_access() {
     local user=$1
     local authorized_keys_dir="$(eval echo ~$user)/.ssh"
@@ -165,7 +165,6 @@ setup_ssh_access() {
     local user_ssh_config="$authorized_keys_dir/config"
     local user_home_dir="$(eval echo ~$user)"
     cp "$private_key_file" "$user_home_dir/.ssh/jumpserver_key" >/dev/null 2>&1
-    ln -s "$SCRIPT_DIR/client.sh" "$user_home_dir/" >/dev/null 2>&1
     echo "export PATH=$user_home_dir/bin" >> "/home/$username/.bash_profile"
     echo "$HOME/kangaroo.sh" >> "$user_home_dir/.bash_profile"
     echo "logout" >> "$user_home_dir/.bash_profile"
