@@ -18,27 +18,65 @@ if [ ! -f "$ssh_config" ]; then
     exit 1
 fi
 
-available_servers=$(awk '
-    /^Host / {host=$2} 
-    /^# Description: / {desc=substr($0, index($0,$3))} 
-    host {print host " - " desc; host=""}
+raw_servers=$(awk '
+    /^Host / { host=$2 } 
+    /^[[:space:]]*HostName / { hostname=$2 } 
+    /^# Description: / { desc=substr($0, index($0,$3)) } 
+    host && hostname && desc {
+        print host "|" hostname "|" desc
+        host=""; hostname=""; desc=""
+    }
 ' "$ssh_config")
 
-if [[ -z "$available_servers" ]]; then
-    echo "No servers configured for user. Aborting."
+if [[ -z "$raw_servers" ]]; then
+    echo "No servers configured. Aborting."
     exit 1
 fi
 
-while true; do
-    server_selection=$(echo "$available_servers" | fzf --prompt="Select server: ")
+draw_banner() {
+    local width=$(tput cols)
+    local line=$(printf '━%.0s' $(seq 1 $width))
+    echo -e "\e[1;34m$line\e[0m"
+    echo -e "  \e[1m🦘 Kangaroo SSH\e[0m"
+    echo -e "  https://github.com/stefanpejcic/kangaroo"
+    echo -e "\e[1;34m$line\e[0m"
+}
 
+while true; do
+# Get current terminal width
+    term_width=$(tput cols)
+    
+    # Define column widths (percentages)
+    col1_w=$(( term_width * 25 / 100 ))
+    col2_w=$(( term_width * 25 / 100 ))
+    col3_w=$(( term_width - col1_w - col2_w - 5 )) # Remaining space
+
+    # 2. Manually format the rows to fill the terminal width
+    formatted_list=$(echo "$raw_servers" | while IFS="|" read -r name ip desc; do
+        printf "%-${col1_w}s %-${col2_w}s %-${col3_w}s\n" "$name" "$ip" "$desc"
+    done)
+
+    # Create the aligned header
+    header_row=$(printf "\e[1;37m%-${col1_w}s %-${col2_w}s %-${col3_w}s\e[0m" "NAME" "IP" "DESCRIPTION")
+    full_header="$(draw_banner)\n$header_row\n"
+
+    selection=$(echo "$formatted_list" | \
+        fzf --header "$(echo -e "$full_header")" \
+            --layout=reverse \
+            --height 100% \
+            --border none \
+            --no-hscroll \
+            --info inline \
+            --color="header:bold:blue,prompt:bold:yellow,pointer:bold:red" \
+            --prompt="Search Host > ")
+        
     # If the user presses Esc or Ctrl+C in fzf, exit
-    if [[ -z "$server_selection" ]]; then
+    if [[ -z "$selection" ]]; then
         echo "Exiting..."
         exit 0
     fi
     
-    server_name=$(echo "$server_selection" | awk '{print $1}')
+    server_name=$(echo "$selection" | awk '{print $1}')
     DATE_TIME=$(date '+%Y-%m-%d %H:%M:%S')  
     echo "User: $USER_NAME connected to server: $server_name using IP: $IP_ADDRESS at $DATE_TIME" >> $LOGFILE
 
