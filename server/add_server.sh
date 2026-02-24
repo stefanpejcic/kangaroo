@@ -122,68 +122,70 @@ EOF
 # Function to set up SSH certificate-based authentication for existing users on MASTER
 setup_ssh_access() {
     local user=$1
-    local authorized_keys_dir="$(eval echo ~$user)/.ssh"
-    mkdir -p $authorized_keys_dir
+    local user_home_dir
+    user_home_dir="$(eval echo ~$user)"
+    local authorized_keys_dir="$user_home_dir/.ssh"
     local authorized_keys_file="$authorized_keys_dir/authorized_keys"
     local user_ssh_config="$authorized_keys_dir/config"
-    local user_home_dir="$(eval echo ~$user)"
-    cp "$private_key_file" "$user_home_dir/.ssh/kangaroo_${server_name}_key_id_rsa" >/dev/null 2>&1
-    echo "export PATH=$user_home_dir/bin" >> "/home/$username/.bash_profile"
-    echo "$HOME/kangaroo.sh" >> "$user_home_dir/.bash_profile"
-    echo "logout" >> "$user_home_dir/.bash_profile"
-      
-    if [ -f "$cert_file" ]; then
-        echo "Setting up SSH access for user $user"
+    local bash_profile="$user_home_dir/.bash_profile"
+    local ssh_key_link="$authorized_keys_dir/kangaroo_${server_name}_key_id_rsa"
 
-	    [[ "$user" == "root" ]] && return
-	
-	    user_home_dir="$(eval echo ~$user)"
-		user_ssh_config="$user_home_dir/.ssh/config"
-		
-		install -d -m 700 -o "$user" -g "$user" "$user_home_dir/.ssh"
-		if [ ! -f "$user_ssh_config" ]; then
-		    touch "$user_ssh_config"
-		    chmod 600 "$user_ssh_config"
-		    chown "$user:$user" "$user_ssh_config"
-		fi
-
-        chown "$user:$user" "$authorized_keys_file" "$user_home_dir/.ssh/kangaroo_${server_name}_key_id_rsa"
-        chmod 600 "$authorized_keys_file" "$user_home_dir/.ssh/kangaroo_${server_name}_key_id_rsa"
-
-		if ! grep -q "Host $server_name" "$user_ssh_config"; then
-		    {
-		        echo "# Description: $server_description"
-		        echo "Host $server_name"
-		        echo "    HostName $server_ip"
-		        echo "    User $ssh_user"
-		        echo "    Port $ssh_port"
-		        echo "    IdentityFile ~/.ssh/kangaroo_${server_name}_key_id_rsa"
-		        echo "    CertificateFile $cert_file"
-		        echo ""
-		    } >> "$user_ssh_config"
-		    echo "Added $server_name to SSH config."
-		else
-		    echo "Host $server_name already exists in SSH config. Skipping."
-		fi
-    else
+    if [ ! -f "$cert_file" ]; then
         echo "No SSH certificate found."
         exit 1
     fi
-	
-	chown -R "$user:$user" "$user_home_dir/.ssh"
-    local ssh_key_link="$user_home_dir/.ssh/kangaroo_${server_name}_key_id_rsa"
-	cp "$private_key_file" "$ssh_key_link"
+
+    echo "Setting up SSH access for user $user"
+    [[ "$user" == "root" ]] && return
+
+    # Ensure .ssh directory exists with proper permissions
+    install -d -m 700 -o "$user" -g "$user" "$authorized_keys_dir"
+
+    # Prepare SSH config
+    if [ ! -f "$user_ssh_config" ]; then
+        touch "$user_ssh_config"
+        chmod 600 "$user_ssh_config"
+        chown "$user:$user" "$user_ssh_config"
+    fi
+
+    # Copy private key and set permissions
+    cp "$private_key_file" "$ssh_key_link"
     chown "$user:$user" "$ssh_key_link"
     chmod 600 "$ssh_key_link"
-    local bash_profile="$user_home_dir/.bash_profile"
-    touch "$bash_profile"
 
+    # Set authorized_keys permissions
+    touch "$authorized_keys_file"
+    chown "$user:$user" "$authorized_keys_file"
+    chmod 600 "$authorized_keys_file"
+
+    # Add host to SSH config if it doesn't exist
+    if ! grep -q "Host $server_name" "$user_ssh_config"; then
+        {
+            echo "# Description: $server_description"
+            echo "Host $server_name"
+            echo "    HostName $server_ip"
+            echo "    User $ssh_user"
+            echo "    Port $ssh_port"
+            echo "    IdentityFile ~/.ssh/kangaroo_${server_name}_key_id_rsa"
+            echo "    CertificateFile $cert_file"
+            echo ""
+        } >> "$user_ssh_config"
+        echo "Added $server_name to SSH config."
+    else
+        echo "Host $server_name already exists in SSH config. Skipping."
+    fi
+
+    # Ensure bash profile entries exist
+    touch "$bash_profile"
     grep -qxF "export PATH=$user_home_dir/bin" "$bash_profile" || echo "export PATH=$user_home_dir/bin" >> "$bash_profile"
     grep -qxF "$HOME/kangaroo.sh" "$bash_profile" || echo "$HOME/kangaroo.sh" >> "$bash_profile"
     grep -qxF "logout" "$bash_profile" || echo "logout" >> "$bash_profile"
 
     chown "$user:$user" "$bash_profile"
     chmod 700 "$bash_profile"
+
+    # Ensure .ssh directory ownership
+    chown -R "$user:$user" "$authorized_keys_dir"
 }
 
 setup_ssh_for() {
