@@ -129,6 +129,7 @@ Commands:
 View SSH login logs:
 
 - Default (last 10 lines): `kangaroo login-logs`
+- Search logs: `kangaroo login-logs --search IP/username/action`
 - Follow logs in real-time: `kangaroo login-logs --follow`
 - View first 20 lines: `kangaroo login-logs --head --lines 20`
 
