@@ -283,7 +283,7 @@ def add_server(description, name, ip, user, port, password, users):
         return
 
     args = [
-        script_path,
+        "bash", script_path,
         f'--description={description}' if description else '',
         f'--name={name}',
         f'--ip={ip}',
