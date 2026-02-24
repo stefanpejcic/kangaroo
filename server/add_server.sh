@@ -97,7 +97,9 @@ MASTER_IP="$master_ip"
 echo -e "##### 🦘 Kangaroo SSH JumpServer #####\n*.* @\$MASTER_IP:514" >> /etc/rsyslog.d/999-kangaroo.conf
 systemctl restart rsyslog >/dev/null
 
-csf -a "\$MASTER_IP" "KangarooSSH JumpServer Master IP" >/dev/null
+if command -v csf >/dev/null 2>&1; then
+	csf -a "\$MASTER_IP" "KangarooSSH JumpServer Master IP" > /dev/null 2>&1
+fi
 
 wget --no-verbose -O "/usr/local/bin/restricted_command.sh" https://raw.githubusercontent.com/stefanpejcic/openjumpserver/refs/heads/main/behind-jumserver/restricted_command.sh
 chmod +x "/usr/local/bin/restricted_command.sh" && chattr +i "/usr/local/bin/restricted_command.sh"
