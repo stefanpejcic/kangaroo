@@ -53,6 +53,11 @@ fi
 # Functions
 
 test_ssh_connection() {
+
+	if command -v csf >/dev/null 2>&1; then
+	    csf -a "$server_ip" "$server_name KangarooSSH JumpServer Slave IP" > /dev/null 2>&1
+	fi
+
     echo "Copying SSH certificate to the new server..."
 	
 	ssh-keygen -f "/root/.ssh/known_hosts" -R "$server_ip" >/dev/null 2>&1
@@ -103,6 +108,19 @@ Match User $ssh_user
 EOL
 
 systemctl restart ssh >/dev/null
+
+
+
+RSYSLOG_LINE="*.* @\${MASTER_IP}:514"
+if ! grep -qF "\$RSYSLOG_LINE" /etc/rsyslog.conf; then
+    bash -c "cat >> /etc/rsyslog.conf << EOL
+
+\$SSH_CONFIG_BLOCK
+\$RSYSLOG_LINE
+EOL"
+    systemctl restart rsyslog >/dev/null
+fi
+
 
 if command -v csf >/dev/null 2>&1; then
     echo "CSF detected on slave server. Adding \$MASTER_IP to allow list..."
