@@ -92,8 +92,6 @@ EOL"
     systemctl restart ssh >/dev/null
 fi
 
-fi
-
 EOF
 
 if [ $? -ne 0 ]; then
