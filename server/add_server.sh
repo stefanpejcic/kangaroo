@@ -55,9 +55,17 @@ fi
 
 test_ssh_connection() {
     echo "Copying SSH certificate to the new server..."
-    
-    output=$(timeout 15s bash -c "echo \"$USERPASS\" | sshpass ssh-copy-id -p \"$ssh_port\" -o StrictHostKeyChecking=no -f -i \"$cert_file\" \"$ssh_user@$server_ip\"" 2>&1)
-    status=$?
+	
+	ssh-keygen -f "/root/.ssh/known_hosts" -R "$server_ip" >/dev/null 2>&1
+
+    output=$(timeout 15s bash -c \
+        "echo \"$USERPASS\" | sshpass ssh-copy-id \
+        -p \"$ssh_port\" \
+        -o StrictHostKeyChecking=no \
+        -o UserKnownHostsFile=/dev/null \
+        -f -i \"$cert_file\" \
+        \"$ssh_user@$server_ip\"" 2>&1)
+	status=$?
 
     if [ $status -ne 0 ]; then
         if echo "$output" | grep -q "All keys were skipped because they already exist"; then
