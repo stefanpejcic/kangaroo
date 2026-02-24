@@ -1,5 +1,5 @@
 #!/bin/bash
-# /usr/local/bin/restricted_shell.sh
+# /usr/local/bin/restricted_command.sh
 LOG_TAG="ssh-restricted"
 
 log_command() {
