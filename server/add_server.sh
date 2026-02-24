@@ -8,9 +8,6 @@ cert_file="/etc/ssh/ssh_host_rsa_key.pub"
 private_key_file="/etc/ssh/ssh_host_rsa_key"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_FILE="$SCRIPT_DIR/jump_servers.conf"
-server_description=""
-server_name=""
-server_ip=""
 ssh_user="root" #maybe?
 ssh_port=22
 ssh_password=""
@@ -64,15 +61,11 @@ else
    USERPASS="$ssh_password"
 fi
 
-#clear 
-
-
 # check first
 if ! command -v sshpass >/dev/null 2>&1; then
     echo "sshpass not found. Installing..."
     apt update -qq >/dev/null && apt install -y -qq sshpass >/dev/null
     echo "sshpass installed successfully."
-    #clear
 fi
 
 # run!
@@ -84,20 +77,6 @@ if [ $? -ne 0 ]; then
     echo "sshpass -p '$USERPASS' ssh-copy-id -p $ssh_port -o StrictHostKeyChecking=no -i $cert_file $ssh_user@$server_ip"
     exit 1
 fi
-
-
-get_server_ipv4(){
-	# list of ip servers for checks
-	IP_SERVER_1="https://ip.openpanel.com"
-	IP_SERVER_2="https://ipv4.openpanel.com"
-	IP_SERVER_3="https://ifconfig.me"
-
-	master_ip=$(curl --silent --max-time 2 -4 $IP_SERVER_1 || wget --inet4-only --timeout=2 -qO- $IP_SERVER_2 || curl --silent --max-time 2 -4 $IP_SERVER_3)
-
-	if [ -z "$master_ip" ]; then
-	    master_ip=$(ip addr|grep 'inet '|grep global|head -n1|awk '{print $2}'|cut -f1 -d/)
-	fi
- }
 
 
 jail_all_users_on_remote() {
@@ -134,7 +113,7 @@ fi
 EOF
 
 if [ $? -ne 0 ]; then
-    echo "❌ Error running commands on remote server."
+    echo "FATAL ERROR running commands on remote server."
     exit 1
 fi
 
@@ -161,7 +140,7 @@ EOL"
 
 # MAIN
 
-get_server_ipv4
+master_ip=$(curl -s https://ip.openpanel.com)
 jail_all_users_on_remote
 
 
