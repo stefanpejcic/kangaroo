@@ -179,7 +179,11 @@ setup_ssh_access() {
 }
 
 setup_ssh_for() {
-    local users="${*:-$(awk -F: '$7 ~ /(\/bin\/(bash|sh|zsh))$/ {print $1}' /etc/passwd)}"
+    local users="$1"
+
+	if [[ "$users" == "all" ]]; then
+	    users=$(awk -F: '$7 ~ /(\/bin\/(bash|sh|zsh))$/ {print $1}' /etc/passwd)
+	fi
 
     for user in $users; do
         if id "$user" &>/dev/null; then
