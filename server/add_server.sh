@@ -18,56 +18,23 @@ selected_users=""
 
 # Parse long options
 for arg in "$@"; do
-  case $arg in
-    --description=*)
-      server_description="${arg#*=}"
-      shift
-      ;;
-    --name=*)
-      server_name="${arg#*=}"
-      shift
-      ;;
-    --ip=*)
-      server_ip="${arg#*=}"
-      shift
-      ;;
-    --user=*)
-      ssh_user="${arg#*=}"
-      shift
-      ;;
-    --port=*)
-      ssh_port="${arg#*=}"
-      shift
-      ;;
-    --password=*)
-      ssh_password="${arg#*=}"
-      shift
-      ;;
-    --users=*)
-      selected_users="${arg#*=}"
-      shift
-      ;;
-    *)
-      # unknown option
-      ;;
-  esac
+    case $arg in
+        --description=*) server_description="${arg#*=}" ;;
+        --name=*)        server_name="${arg#*=}"        ;;
+        --ip=*)          server_ip="${arg#*=}"          ;;
+        --user=*)        ssh_user="${arg#*=}"           ;;
+        --port=*)        ssh_port="${arg#*=}"           ;;
+        --password=*)    ssh_password="${arg#*=}"       ;;
+        --users=*)       selected_users="${arg#*=}"     ;;
+    esac
 done
 
 
 
-
 # Prompts
-if [[ -z "$server_description" ]]; then
-  read -p "Enter the server description: " server_description
-fi
-
-if [[ -z "$server_name" ]]; then
-  read -p "Enter the server name (e.g., webserver1): " server_name
-fi
-
-if [[ -z "$server_ip" ]]; then
-  read -p "Enter the server IP address: " server_ip
-fi
+[[ -z "$server_description" ]] && read -p "Description: " server_description
+[[ -z "$server_name" ]]        && read -p "Server Name: " server_name
+[[ -z "$server_ip" ]]          && read -p "IP Address: "  server_ip
 
 if [[ -z "$ssh_user" ]]; then
   read -p "Enter SSH username for the new server: " ssh_user
