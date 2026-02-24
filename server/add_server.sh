@@ -29,7 +29,6 @@ for arg in "$@"; do
 done
 
 # Prompts
-[[ -z "$server_description" ]] && read -p "Description: " server_description
 [[ -z "$server_name" ]]        && read -p "Server Name: " server_name
 [[ -z "$server_ip" ]]          && read -p "IP Address: "  server_ip
 
