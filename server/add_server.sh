@@ -139,13 +139,13 @@ add_ssh_kagaroo_for_user() {
 	    echo "    HostName $server_ip"
 	    echo "    User $ssh_user"
 	    echo "    Port $ssh_port"
-	    echo "    IdentityFile ~/.ssh/jumpserver_key"
+	    echo "    IdentityFile ~/.ssh/kangaroo_${server_name}_key_id_rsa"
 	    echo "    CertificateFile $cert_file"
 	    echo ""
 	} >> "$user_ssh_config"
 	
 	chown -R "$user:$user" "$user_home_dir/.ssh"
-    local ssh_key_link="$user_home_dir/.ssh/jumpserver_key"
+    local ssh_key_link="$user_home_dir/.ssh/kangaroo_${server_name}_key_id_rsa"
 	cp "$private_key_file" "$ssh_key_link"
     chown "$user:$user" "$ssh_key_link"
     chmod 600 "$ssh_key_link"
@@ -168,7 +168,7 @@ setup_ssh_access() {
     local authorized_keys_file="$authorized_keys_dir/authorized_keys"
     local user_ssh_config="$authorized_keys_dir/config"
     local user_home_dir="$(eval echo ~$user)"
-    cp "$private_key_file" "$user_home_dir/.ssh/jumpserver_key" >/dev/null 2>&1
+    cp "$private_key_file" "$user_home_dir/.ssh/kangaroo_${server_name}_key_id_rsa" >/dev/null 2>&1
     echo "export PATH=$user_home_dir/bin" >> "/home/$username/.bash_profile"
     echo "$HOME/kangaroo.sh" >> "$user_home_dir/.bash_profile"
     echo "logout" >> "$user_home_dir/.bash_profile"
@@ -177,8 +177,8 @@ setup_ssh_access() {
         echo "Setting up SSH access for user $user"
         add_ssh_kagaroo_for_user "$user"
         #echo "command=\"ssh -i $cert_file -p $ssh_port $ssh_user@$server_ip\" $cert_file" >> "$authorized_keys_file"
-        chown "$user:$user" "$authorized_keys_file" "$user_home_dir/.ssh/jumpserver_key"
-        chmod 600 "$authorized_keys_file" "$user_home_dir/.ssh/jumpserver_key"
+        chown "$user:$user" "$authorized_keys_file" "$user_home_dir/.ssh/kangaroo_${server_name}_key_id_rsa"
+        chmod 600 "$authorized_keys_file" "$user_home_dir/.ssh/kangaroo_${server_name}_key_id_rsa"
 
 		if ! grep -q "Host $server_name" "$user_ssh_config"; then
 		    {
@@ -187,7 +187,7 @@ setup_ssh_access() {
 		        echo "    HostName $server_ip"
 		        echo "    User $ssh_user"
 		        echo "    Port $ssh_port"
-		        echo "    IdentityFile ~/.ssh/jumpserver_key"
+		        echo "    IdentityFile ~/.ssh/kangaroo_${server_name}_key_id_rsa"
 		        echo "    CertificateFile $cert_file"
 		        echo ""
 		    } >> "$user_ssh_config"
