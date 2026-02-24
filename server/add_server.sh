@@ -94,7 +94,7 @@ jail_all_users_on_remote() {
 set -e
 MASTER_IP="$master_ip"
 
-echo -e "##### 🦘 Kangaroo SSH JumpServer #####\n*.* @\$MASTER_IP:514" > /etc/rsyslog.d/999-kangaroo.conf
+echo -e "##### Kangaroo SSH JumpServer #####\n*.* @\$MASTER_IP:514" > /etc/rsyslog.d/999-kangaroo.conf
 systemctl restart rsyslog >/dev/null
 
 if command -v csf >/dev/null 2>&1; then
