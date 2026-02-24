@@ -220,7 +220,6 @@ setup_ssh_for ${selected_users:-all}
 
 # 4. save new server info
 mkdir -p $SCRIPT_DIR
-chmod 600 "$CONFIG_FILE"
 echo "$server_name $server_ip" >> "$CONFIG_FILE"
-
+chmod 600 "$CONFIG_FILE"
 echo "Server $server_name ($server_ip:$ssh_port) added, and SSH access configured using certificates from Kangaroo 🦘"
