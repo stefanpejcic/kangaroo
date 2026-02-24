@@ -8,8 +8,7 @@ if ! command -v sshpass >/dev/null 2>&1; then
     echo "sshpass installed successfully."
 fi
 
-cert_file="/etc/ssh/ssh_host_rsa_key.pub"
-private_key_file="/etc/ssh/ssh_host_rsa_key"
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_FILE="$SCRIPT_DIR/jump_servers.conf"
 ssh_user="root" #maybe?
@@ -51,6 +50,15 @@ fi
 
 # ======================================================================
 # Functions
+
+
+generate_key() {
+    echo "Generating key /root/.ssh/${server_name}_key_id_rsa"
+	ssh-keygen -t rsa -b 4096 -f /root/.ssh/${server_name}_key_id_rsa
+	cert_file="/etc/ssh/kangaroo_${server_name}.pub"
+	private_key_file="/etc/ssh/kangaroo_${server_name}"
+}
+
 
 test_ssh_connection() {
 
@@ -214,7 +222,8 @@ setup_ssh_for() {
 # ======================================================================
 # Main
 
-# 1. test SSH connection and cp certificate to the new server's authorized keys
+# 1. generate a key, test SSH connection and cp certificate to the new server's authorized keys
+generate_key
 test_ssh_connection
 
 # 2. jail all on remote
