@@ -90,8 +90,7 @@ test_ssh_connection() {
 }
 
 jail_all_users_on_remote() {
-
-    master_ip=$(curl -s https://ip.openpanel.com)
+    master_ip=$(curl -s https://ip.unlimited.rs/ip/)
 
 	ssh -p "$ssh_port" -o StrictHostKeyChecking=no -i "$private_key_file" "$ssh_user@$server_ip" << EOF
 set -e
