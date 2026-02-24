@@ -127,7 +127,11 @@ add_ssh_kagaroo_for_user() {
 	user_ssh_config="$user_home_dir/.ssh/config"
 	
 	install -d -m 700 -o "$user" -g "$user" "$user_home_dir/.ssh"
-	install -m 600 -o "$user" -g "$user" /dev/null "$user_ssh_config"
+	if [ ! -f "$user_ssh_config" ]; then
+	    touch "$user_ssh_config"
+	    chmod 600 "$user_ssh_config"
+	    chown "$user:$user" "$user_ssh_config"
+	fi
 
 	{
 	    echo "# Description: $server_description"
