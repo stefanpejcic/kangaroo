@@ -107,7 +107,7 @@ wget -q -O /usr/local/bin/restricted_command.sh https://raw.githubusercontent.co
 
 chmod +x "/usr/local/bin/restricted_command.sh" && chattr +i "/usr/local/bin/restricted_command.sh"
 
-echo -e "##### 🦘 Kangaroo SSH JumpServer #####\nMatch User $ssh_user\n    ForceCommand /usr/local/bin/restricted_command.sh" > /etc/ssh/sshd_config.d/999-kangaroo.conf
+echo -e "##### 🦘 Kangaroo SSH JumpServer #####\nMatch User $ssh_user\n    PermitRootLogin yes\n    PubkeyAuthentication yes\n    ForceCommand /usr/local/bin/restricted_command.sh" > /etc/ssh/sshd_config.d/999-kangaroo.conf
 systemctl restart sshd >/dev/null 2>&1 || systemctl restart ssh >/dev/null 2>&1
 
 EOF
