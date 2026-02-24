@@ -18,7 +18,11 @@ if [ ! -f "$ssh_config" ]; then
     exit 1
 fi
 
-available_servers=$(awk '/^Host / {host=$2} /^# Description: / {desc=$3} host {print host " - " desc; host=""}' "$ssh_config")
+available_servers=$(awk '
+    /^Host / {host=$2} 
+    /^# Description: / {desc=substr($0, index($0,$3))} 
+    host {print host " - " desc; host=""}
+' "$ssh_config")
 
 if [[ -z "$available_servers" ]]; then
     echo "No servers configured for user. Aborting."
