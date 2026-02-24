@@ -108,7 +108,7 @@ add_ssh_kagaroo_for_user() {
     user_home_dir="$(eval echo ~$user)"
 	user_ssh_config="$user_home_dir/.ssh/config"
 	
-	install -d -m 700 -o "$user" -g "$user" "$user_home/.ssh"
+	install -d -m 700 -o "$user" -g "$user" "$user_home_dir/.ssh"
 	install -m 600 -o "$user" -g "$user" /dev/null "$user_ssh_config"
 
 	{
