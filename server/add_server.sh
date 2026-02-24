@@ -55,7 +55,7 @@ generate_key() {
 	cert_file="/etc/ssh/kangaroo_${server_name}_key_id_rsa.pub"
 	private_key_file="/etc/ssh/kangaroo_${server_name}_key_id_rsa"
     echo "Generating $cert_file and $private_key_file"
-	ssh-keygen -t rsa -b 4096 -f /etc/ssh/${server_name}_key_id_rsa -N ""
+	ssh-keygen -t rsa -b 4096 -f $cert_file -N ""
 }
 
 test_ssh_connection() {
