@@ -51,25 +51,20 @@ fi
 # ======================================================================
 # Functions
 
-
 generate_key() {
-    echo "Generating key /root/.ssh/${server_name}_key_id_rsa"
-	ssh-keygen -t rsa -b 4096 -f /root/.ssh/${server_name}_key_id_rsa -N ""
-	cert_file="/etc/ssh/kangaroo_${server_name}.pub"
-	private_key_file="/etc/ssh/kangaroo_${server_name}"
+	cert_file="/etc/ssh/kangaroo_${server_name}_key_id_rsa.pub"
+	private_key_file="/etc/ssh/kangaroo_${server_name}_key_id_rsa"
+    echo "Generating $cert_file and $private_key_file"
+	ssh-keygen -t rsa -b 4096 -f /etc/ssh/${server_name}_key_id_rsa -N ""
 }
 
-
 test_ssh_connection() {
-
 	if command -v csf >/dev/null 2>&1; then
 	    csf -a "$server_ip" "$server_name KangarooSSH JumpServer Slave IP" > /dev/null 2>&1
 	fi
 
     echo "Copying SSH certificate to the new server..."
-	
 	ssh-keygen -f "/root/.ssh/known_hosts" -R "$server_ip" >/dev/null 2>&1
-
     output=$(timeout 15s bash -c \
         "echo \"$USERPASS\" | sshpass ssh-copy-id \
         -p \"$ssh_port\" \
