@@ -92,27 +92,23 @@ set -e
 SCRIPT_PATH="/usr/local/bin/restricted_command.sh"
 MASTER_IP="$master_ip"
 
-# Download restricted command script if not present
 if [ ! -f "\$SCRIPT_PATH" ]; then
     wget --no-verbose -O "\$SCRIPT_PATH" https://raw.githubusercontent.com/stefanpejcic/openjumpserver/refs/heads/main/behind-jumserver/restricted_command.sh
-    chmod +x "\$SCRIPT_PATH"
-    chattr +i "\$SCRIPT_PATH"
+    chmod +x "\$SCRIPT_PATH" && chattr +i "\$SCRIPT_PATH"
 fi
 
-# Add ForceCommand only if not already added
-SSH_CONFIG_BLOCK="##### 🦘 Kangaroo SSH JumpServer #####"
-SSH_CONFIG_MATCH="Match User $ssh_user"
-if ! grep -q "\$SSH_CONFIG_MATCH" /etc/ssh/sshd_config; then
-    bash -c "cat >> /etc/ssh/sshd_config << EOL
+cat > /etc/ssh/sshd_config.d/kangaroo.conf <<EOL
+##### 🦘 Kangaroo SSH JumpServer #####
+Match User $ssh_user
+    ForceCommand $SCRIPT_PATH
+EOL
 
-\$SSH_CONFIG_BLOCK
-\$SSH_CONFIG_MATCH
-    ForceCommand \$SCRIPT_PATH
-EOL"
-    systemctl restart ssh >/dev/null
-fi
+systemctl restart ssh >/dev/null
 
-
+if command -v csf >/dev/null 2>&1; then
+    echo "CSF detected on slave server. Adding \$MASTER_IP to allow list..."
+    csf -a "\$MASTER_IP" "KangarooSSH JumpServer Master IP" || true
+    csf -r || true
 fi
 
 EOF
