@@ -68,32 +68,33 @@ jail_all_users_on_remote() {
 
     master_ip=$(curl -s https://ip.openpanel.com)
 
-    ssh -T -p "$ssh_port" \
-        -o StrictHostKeyChecking=no \
-        -i "$private_key_file" \
-        "$ssh_user@$server_ip" bash <<'EOF'
-
+ssh -p "$ssh_port" -o StrictHostKeyChecking=no -i "$private_key_file" "$ssh_user@$server_ip" << EOF
 set -e
 
 SCRIPT_PATH="/usr/local/bin/restricted_command.sh"
-SSH_USER="'"$ssh_user"'"
-MASTER_IP="'"$master_ip"'"
+MASTER_IP="$master_ip"
 
 # Download restricted command script if not present
-if [ ! -f "$SCRIPT_PATH" ]; then
-    wget -q -O "$SCRIPT_PATH" https://raw.githubusercontent.com/stefanpejcic/openjumpserver/refs/heads/main/behind-jumserver/restricted_command.sh
-    chmod +x "$SCRIPT_PATH"
-    chattr +i "$SCRIPT_PATH" || true
+if [ ! -f "\$SCRIPT_PATH" ]; then
+    wget --no-verbose -O "\$SCRIPT_PATH" https://raw.githubusercontent.com/stefanpejcic/openjumpserver/refs/heads/main/behind-jumserver/restricted_command.sh
+    chmod +x "\$SCRIPT_PATH"
+    chattr +i "\$SCRIPT_PATH"
 fi
 
-SSH_CONFIG_BLOCK="##### 🦘 Kangaroo SSH JumpServer #####"
-SSH_CONFIG_MATCH="Match User $SSH_USER"
-
 # Add ForceCommand only if not already added
-if ! grep -q "$SSH_CONFIG_MATCH" /etc/ssh/sshd_config; then
-    printf "\n%s\n%s\n    ForceCommand %s\n" "$SSH_CONFIG_BLOCK" "$SSH_CONFIG_MATCH" "$SCRIPT_PATH" >> /etc/ssh/sshd_config
-    # Restart SSH service safely
-    systemctl restart ssh >/dev/null 2>&1 || systemctl restart sshd >/dev/null 2>&1
+SSH_CONFIG_BLOCK="##### 🦘 Kangaroo SSH JumpServer #####"
+SSH_CONFIG_MATCH="Match User $ssh_user"
+if ! grep -q "\$SSH_CONFIG_MATCH" /etc/ssh/sshd_config; then
+    bash -c "cat >> /etc/ssh/sshd_config << EOL
+
+\$SSH_CONFIG_BLOCK
+\$SSH_CONFIG_MATCH
+    ForceCommand \$SCRIPT_PATH
+EOL"
+    systemctl restart ssh >/dev/null
+fi
+
+
 fi
 
 EOF
