@@ -54,7 +54,7 @@ fi
 
 generate_key() {
     echo "Generating key /root/.ssh/${server_name}_key_id_rsa"
-	ssh-keygen -t rsa -b 4096 -f /root/.ssh/${server_name}_key_id_rsa
+	ssh-keygen -t rsa -b 4096 -f /root/.ssh/${server_name}_key_id_rsa -N ""
 	cert_file="/etc/ssh/kangaroo_${server_name}.pub"
 	private_key_file="/etc/ssh/kangaroo_${server_name}"
 }
