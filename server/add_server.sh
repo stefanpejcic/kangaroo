@@ -141,10 +141,8 @@ fi
 
 EOF
 
-#wget -q -O /usr/local/bin/restricted_command.sh https://raw.githubusercontent.com/stefanpejcic/openjumpserver/refs/heads/main/behind-jumserver/restricted_command.sh 2>/dev/null
-#chmod +x "/usr/local/bin/restricted_command.sh" && chattr +i "/usr/local/bin/restricted_command.sh"
-#echo -e "##### 🦘 Kangaroo SSH JumpServer #####\nMatch User $ssh_user\n    PermitRootLogin yes\n    PubkeyAuthentication yes\n    ForceCommand /usr/local/bin/restricted_command.sh" > /etc/ssh/sshd_config.d/999-kangaroo.conf
-#systemctl restart sshd >/dev/null 2>&1 || systemctl restart ssh >/dev/null 2>&1
+echo -e "##### 🦘 Kangaroo SSH JumpServer #####\nMatch User kangaroo\n    PermitRootLogin yes\n    PasswordAuthentication yes\n    PubkeyAuthentication yes" > /etc/ssh/sshd_config.d/999-kangaroo.conf
+systemctl restart sshd >/dev/null 2>&1 || systemctl restart ssh >/dev/null 2>&1
 
     if [ $? -ne 0 ]; then
         echo "FATAL ERROR running commands on remote server."
