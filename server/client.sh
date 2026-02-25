@@ -1,5 +1,9 @@
 #!/bin/bash
 
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+
 SCRIPT_PATH="$0"
 SCRIPT_ABS_PATH=$(readlink -f "$SCRIPT_PATH")
 SCRIPT_DIR=$(dirname "$SCRIPT_ABS_PATH")
@@ -78,7 +82,7 @@ while true; do
 
     # Connect to the selected server
     echo "Connecting to $server_name..."
-    ssh -o StrictHostKeyChecking=no "$server_name"
+    /usr/bin/tlog-rec-session -c "/usr/bin/ssh -o StrictHostKeyChecking=no $server_name"
     echo -e "\nDisconnected from $server_name. Returning to server selection..."
     DATE_TIME=$(date '+%Y-%m-%d %H:%M:%S')  
     echo "User: $USER_NAME disconnected from server: $server_name using IP: $IP_ADDRESS at $DATE_TIME" >> $LOGFILE
