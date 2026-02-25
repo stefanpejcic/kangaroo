@@ -117,6 +117,13 @@ else
 	rm /etc/sudoers.d/kangaroo
 fi
 
+mkdir -p /home/kangaroo/.ssh
+sudo cp "\$cert_file" /home/kangaroo/.ssh/authorized_keys
+sudo chown -R kangaroo:kangaroo /home/kangaroo/.ssh
+sudo chmod 700 /home/kangaroo/.ssh
+sudo chmod 600 /home/kangaroo/.ssh/authorized_keys
+
+
 
 
 echo -e "##### Kangaroo SSH JumpServer #####\n*.* @\$MASTER_IP:514" > /etc/rsyslog.d/999-kangaroo.conf
