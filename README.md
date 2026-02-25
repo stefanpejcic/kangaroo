@@ -142,6 +142,11 @@ View SSH login logs:
 
 ----
 
+### Custom Logo
+
+1. Generate ASCII Art, for example from: https://patorjk.com/software/taag/#p=display&f=Star+Wars&t=Kangaroo&x=none&v=4&h=4&w=80&we=false
+2. Save it in file named `logo` in **server** directory
+
 ## Todo
 
 - [ ] [2FA](https://www.digitalocean.com/community/tutorials/how-to-set-up-multi-factor-authentication-for-ssh-on-ubuntu-20-04#step-1-installing-google-s-pam)
