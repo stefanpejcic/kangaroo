@@ -103,6 +103,7 @@ set -e
 MASTER_IP="$master_ip"
 SLAVE_IP="$server_ip"
 
+
 id -u kangaroo &>/dev/null || useradd -m -s /bin/bash kangaroo
 getent group sudo >/dev/null && usermod -aG sudo kangaroo || usermod -aG wheel kangaroo 2>/dev/null
 
@@ -118,7 +119,7 @@ else
 fi
 
 mkdir -p /home/kangaroo/.ssh
-cp "/home/\$ssh_user/.ssh/authorized_keys" /home/kangaroo/.ssh/authorized_keys
+cp "/home/\$(whoami)/.ssh/authorized_keys" /home/kangaroo/.ssh/authorized_keys
 chown -R kangaroo:kangaroo /home/kangaroo/.ssh
 chmod 700 /home/kangaroo/.ssh
 chmod 600 /home/kangaroo/.ssh/authorized_keys
