@@ -69,10 +69,10 @@ sudo systemctl restart rsyslog
 install_if_missing "tlog-rec-session" "tlog"
 install_if_missing "fzf" "fzf"
 
-chmod a+x "${SCRIPT_DIR}/server/client.sh"
 mkdir -p "${SCRIPT_DIR}/server/logs"
 touch "${SCRIPT_DIR}/server/logs/ssh_login.log"
 chmod 666 "${SCRIPT_DIR}/server/logs/ssh_login.log"
+chmod 775 /var/run/tlog
 
 if ! grep -q 'Kangaroo SSH JumpServer' /etc/ssh/sshd_config; then
     echo "Restricting 'jump-users' group to ${SCRIPT_DIR}/server/client.sh"
@@ -81,7 +81,7 @@ if ! grep -q 'Kangaroo SSH JumpServer' /etc/ssh/sshd_config; then
 PubkeyAuthentication yes
 AuthorizedKeysFile .ssh/authorized_keys
 Match Group jump-users
-    ForceCommand ${SCRIPT_DIR}/server/client.sh
+    ForceCommand /usr/bin/bash ${SCRIPT_DIR}/server/client.sh
     AllowTcpForwarding no
     X11Forwarding no
 EOF
