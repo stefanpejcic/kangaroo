@@ -54,8 +54,12 @@ fi
 generate_key() {
 	cert_file="/etc/ssh/kangaroo_${server_name}_key_id_rsa.pub"
 	private_key_file="/etc/ssh/kangaroo_${server_name}_key_id_rsa"
-    echo "Generating $cert_file and $private_key_file"
-	ssh-keygen -t rsa -b 4096 -f $private_key_file -N ""
+    if [ ! -f "$private_key_file" ]; then
+        echo "Generating $cert_file and $private_key_file"
+        ssh-keygen -t rsa -b 4096 -f "$private_key_file" -N ""
+    else
+        echo "Reusing existing keys pair: $cert_file and $private_key_file"
+    fi	
 }
 
 test_ssh_connection() {
@@ -98,7 +102,8 @@ MASTER_IP="$master_ip"
 SLAVE_IP="$server_ip"
 
 id -u kangaroo &>/dev/null || useradd -m -s /bin/bash kangaroo
-usermod -aG sudo kangaroo || usermod -aG wheel kangaroo
+getent group sudo >/dev/null && usermod -aG sudo kangaroo || usermod -aG wheel kangaroo 2>/dev/null
+
 echo "kangaroo ALL=(ALL:ALL) NOPASSWD: ALL, !/usr/bin/rm, !/usr/sbin/reboot, !/usr/sbin/shutdown" > /etc/sudoers.d/kangaroo
 chmod 440 /etc/sudoers.d/kangaroo
 grep -q "sudo -i" /home/kangaroo/.bashrc || echo "exec sudo -i" >> /home/kangaroo/.bashrc
