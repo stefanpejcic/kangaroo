@@ -118,10 +118,10 @@ else
 fi
 
 mkdir -p /home/kangaroo/.ssh
-sudo cp "\$cert_file" /home/kangaroo/.ssh/authorized_keys
-sudo chown -R kangaroo:kangaroo /home/kangaroo/.ssh
-sudo chmod 700 /home/kangaroo/.ssh
-sudo chmod 600 /home/kangaroo/.ssh/authorized_keys
+cp "/home/\$ssh_user/.ssh/authorized_keys" /home/kangaroo/.ssh/authorized_keys
+chown -R kangaroo:kangaroo /home/kangaroo/.ssh
+chmod 700 /home/kangaroo/.ssh
+chmod 600 /home/kangaroo/.ssh/authorized_keys
 
 
 
