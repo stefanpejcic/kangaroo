@@ -216,7 +216,7 @@ setup_ssh_for() {
 	awk -F: '$3 >= 1000 && $1 != "nobody" {print $1}' /etc/passwd | xargs -I {} usermod -aG jump-users {}
 
 	if [[ "$users" == "all" ]]; then
-	    users=$(awk -F: '$7 ~ /(\/bin\/(bash|sh|zsh))$/ {print $1}' /etc/passwd)
+		users=$(awk -F: '$1 != "root" && $7 ~ /(\/bin\/(bash|sh|zsh))$/ {print $1}' /etc/passwd)
 	fi
 
     for user in $users; do
