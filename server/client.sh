@@ -41,8 +41,15 @@ draw_banner() {
     local width=$(tput cols)
     local line=$(printf '━%.0s' $(seq 1 $width))
     echo -e "\e[1;34m$line\e[0m"
-    echo -e "  \e[1m🦘 Kangaroo SSH JumpServer\e[0m"
-    echo -e "  https://github.com/stefanpejcic/kangaroo"
+    if [[ -f "$SCRIPT_DIR/logo" ]]; then
+        while IFS= read -r l; do
+            echo -e "\e[1;32m$l\e[0m"
+        done < "$SCRIPT_DIR/logo"
+    else
+        echo ""
+        echo -e "  \e[1m🦘 Kangaroo SSH JumpServer\e[0m"
+        echo -e "  https://github.com/stefanpejcic/kangaroo"
+    fi
     echo ""
     echo -e "  \e[1mChoose a server from the list below or type to search.\e[0m"
     echo -e "\e[1;34m$line\e[0m"
