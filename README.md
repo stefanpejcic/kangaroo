@@ -11,7 +11,7 @@ How it works:
 
 1. **Install on Master:** Run the installation script to restrict all non-root users to the [server/client.sh](https://github.com/stefanpejcic/kangaroo/blob/main/server/client.sh) menu interface.
 2. **Add Users:** [Create standard Linux system users](https://www.google.com/search?q=linux+create+user) on the Master node.
-3. **Link Slaves:** Use `kangaroo add-server` to register remote servers. This automatically configures the Slave to restrict incoming SSH users to the [behind-jumserver/restricted_command.sh](https://github.com/stefanpejcic/kangaroo/blob/main/behind-jumserver/restricted_command.sh) script.
+3. **Link Slaves:** Use `kangaroo add-server` to register remote servers. This automatically creates a new account on the Slave and configures it to forward syslog to the master.
 
 that's it! Users now simply SSH into the **Master**, where they are greeted by the fzf menu where they can view authorized servers and "jump" to them instantly.
 
