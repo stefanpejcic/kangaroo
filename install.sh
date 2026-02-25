@@ -75,9 +75,8 @@ touch "${SCRIPT_DIR}/server/logs/ssh_login.log"
 chmod 666 "${SCRIPT_DIR}/server/logs/ssh_login.log"
 
 if ! grep -q 'Kangaroo SSH JumpServer' /etc/ssh/sshd_config; then
-echo "Restricting all users except 'root' to ${SCRIPT_DIR}/server/client.sh"
-
-  cat << EOF >> /etc/ssh/sshd_config
+    echo "Restricting 'jump-users' group to ${SCRIPT_DIR}/server/client.sh"
+    cat << EOF >> /etc/ssh/sshd_config
 ##### 🦘 Kangaroo SSH JumpServer #####
 PubkeyAuthentication yes
 AuthorizedKeysFile .ssh/authorized_keys
@@ -87,16 +86,14 @@ Match Group jump-users
     X11Forwarding no
 EOF
 
-
-echo "Restarting SSH service.."
-sudo systemctl restart ssh
+    echo "Restarting SSH service.."
+    sudo systemctl restart ssh
 fi
 
 # group existing users
 echo "Adding all exisitng users to jump-users group.."
 groupadd jump-users
 awk -F: '$3 >= 1000 && $1 != "nobody" {print $1}' /etc/passwd | xargs -I {} usermod -aG jump-users {}
-
 
 log_collector
 
