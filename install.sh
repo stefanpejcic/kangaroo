@@ -1,11 +1,5 @@
 #!/bin/bash
 
-: '
-to add slave servers:
-bash server/add_server.sh --description="op mejl server" --name="mail" --ip=185.119.XX.XX --password="XXXXX" --users=stefan,stefan2
-'
-
-
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if [[ "$SCRIPT_DIR" == /root* ]]; then
@@ -15,6 +9,22 @@ if [[ "$SCRIPT_DIR" == /root* ]]; then
 fi
 
 echo 'alias kangaroo="python3 $SCRIPT_DIR/cli.py"' >> ~/.bashrc
+
+
+# ======================================================================
+# Functions
+
+install_if_missing() {
+    local cmd="$1"
+    local pkg="$2"
+
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+        echo "Installing $pkg..."
+        apt update -qq >/dev/null && apt install -y -qq "$pkg" >/dev/null
+        echo "$pkg installed successfully."
+        clear
+    fi
+}
 
 log_collector() {
 
@@ -53,12 +63,13 @@ clear
 
 
 
-if ! command -v fzf >/dev/null 2>&1; then
-    echo "Installing fzf..."
-    apt update -qq >/dev/null && apt install -y -qq fzf >/dev/null
-    echo "fzf installed successfully."
-    clear
-fi
+
+
+
+# ======================================================================
+# Main
+install_if_missing "tlog-rec-session" "tlog"
+install_if_missing "fzf" "fzf"
 
 chmod a+x "${SCRIPT_DIR}/server/client.sh"
 mkdir -p "${SCRIPT_DIR}/server/logs"
@@ -72,8 +83,10 @@ echo "Restricting all users except 'root' to ${SCRIPT_DIR}/server/client.sh"
 ##### 🦘 Kangaroo SSH JumpServer #####
 #PubkeyAuthentication yes
 AuthorizedKeysFile .ssh/authorized_keys
-Match User *,!root
-    ForceCommand ${SCRIPT_DIR}/server/client.sh
+Match Group jump-users
+    ForceCommand tlog-rec-session -c ${SCRIPT_DIR}/server/client.sh
+    AllowTcpForwarding no
+    X11Forwarding no
 EOF
 
 clear
@@ -82,9 +95,13 @@ sudo systemctl restart ssh
 clear
 fi
 
+# group existing users
+echo "Adding all exisitng users to jump-users group.."
+groupadd jump-users
+awk -F: '$3 >= 1000 && $1 != "nobody" {print $1}' /etc/passwd | xargs -I {} usermod -aG jump-users {}
+
 
 log_collector
-
 
 echo "🦘 Kangaroo SSH JumpServer is installed! - please execute 'source ~/.bashrc'"
 echo
