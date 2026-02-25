@@ -8,7 +8,7 @@ if [[ "$SCRIPT_DIR" == /root* ]]; then
     exit 1
 fi
 
-echo 'alias kangaroo="python3 $SCRIPT_DIR/cli.py"' >> ~/.bashrc
+echo "alias kangaroo=\"python3 $SCRIPT_DIR/cli.py\"" >> ~/.bashrc
 
 
 # ======================================================================
