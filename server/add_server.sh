@@ -230,7 +230,7 @@ setup_ssh_for() {
 		users=$(awk -F: '$1 != "root" && $7 ~ /(\/bin\/(bash|sh|zsh))$/ {print $1}' /etc/passwd)
 	fi
 
-    for user in $users; do
+    for user in ${users//,/ }; do
         if id "$user" &>/dev/null; then
             setup_ssh_access "$user"
         else
