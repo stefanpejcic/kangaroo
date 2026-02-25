@@ -226,7 +226,7 @@ setup_ssh_for() {
     local users="$1"
 
 	# adds all users to jump-users group - TODO: https://www.youtube.com/watch?v=tw429JGL5zo&list=RDtw429JGL5zo
-	awk -F: '$3 >= 1000 && $1 != "nobody" {print $1}' /etc/passwd | xargs -I {} usermod -aG jump-users {}
+	awk -F: '$3 >= 1000 && $1 != "nobody" {print $1}' /etc/passwd | xargs -I {} usermod -aG jump-users,_tlog {}
 
 	if [[ "$users" == "all" ]]; then
 		users=$(awk -F: '$1 != "root" && $7 ~ /(\/bin\/(bash|sh|zsh))$/ {print $1}' /etc/passwd)
