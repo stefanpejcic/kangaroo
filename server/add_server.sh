@@ -193,7 +193,7 @@ setup_ssh_access() {
             echo "# Description: $server_description"
             echo "Host $server_name"
             echo "    HostName $server_ip"
-            echo "    User $ssh_user"
+            echo "    User kangaroo"
             echo "    Port $ssh_port"
             echo "    IdentityFile ~/.ssh/kangaroo_${server_name}_key_id_rsa"
             echo "    CertificateFile $cert_file"
