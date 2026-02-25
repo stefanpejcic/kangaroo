@@ -119,7 +119,7 @@ else
 fi
 
 mkdir -p /home/kangaroo/.ssh
-cp "/home/\$(whoami)/.ssh/authorized_keys" /home/kangaroo/.ssh/authorized_keys
+cp "~/.ssh/authorized_keys" /home/kangaroo/.ssh/authorized_keys
 chown -R kangaroo:kangaroo /home/kangaroo/.ssh
 chmod 700 /home/kangaroo/.ssh
 chmod 600 /home/kangaroo/.ssh/authorized_keys
