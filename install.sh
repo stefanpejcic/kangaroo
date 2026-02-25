@@ -22,7 +22,6 @@ install_if_missing() {
         echo "Installing $pkg..."
         apt update -qq >/dev/null && apt install -y -qq "$pkg" >/dev/null
         echo "$pkg installed successfully."
-        clear
     fi
 }
 
@@ -57,7 +56,6 @@ fi
 
 echo "Restarting rsyslog service.."
 sudo systemctl restart rsyslog
-clear
 
 }
 
@@ -89,10 +87,9 @@ Match Group jump-users
     X11Forwarding no
 EOF
 
-clear
+
 echo "Restarting SSH service.."
 sudo systemctl restart ssh
-clear
 fi
 
 # group existing users
