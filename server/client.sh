@@ -56,7 +56,7 @@ draw_banner() {
 }
 
 # TODO: mv
-chmod 775 /var/run/tlog
+chmod 775 /var/run/tlog > /dev/null 2>&1
 
 while true; do
     term_width=$(tput cols)
