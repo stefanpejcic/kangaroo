@@ -41,6 +41,11 @@ if [[ -z "$ssh_port" ]]; then
   ssh_port=${ssh_port:-22}
 fi
 
+if [[ -z "$server_description" ]]; then
+  read -p "Enter description (can be later changed): " server_description
+  server_description=${server_description:-none}
+fi
+
 if [[ -z "$ssh_password" ]]; then
    echo "Insert password for $ssh_user@$server_ip:$ssh_port"
    read -r USERPASS
