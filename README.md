@@ -134,6 +134,12 @@ View SSH login logs:
 - View first 20 lines: `kangaroo login-logs --head --lines 20`
 
 
+### Screen Recordings
+- List all recordings: `journalctl -t tlog-rec-session`
+- List for today only: `journalctl -t tlog-rec-session --since today`
+- List recordings for user 'stefan': `journalctl _UID=$(id -u stefan) -t tlog-rec-session`
+- View a recording ID: '814b22f52288410f9e1801d123f75aac-cc1-7c18': `tlog-play --reader=journal -M "TLOG_REC=814b22f52288410f9e1801d123f75aac-cc1-7c18"`
+
 ----
 
 ## Todo
