@@ -96,6 +96,8 @@ test_ssh_connection() {
 jail_all_users_on_remote() {
     master_ip=$(curl -s https://ip.unlimited.rs/ip/)
 
+	# /etc/sudoers.d/48-wp-toolkit: bad permissions, should be mode 0440
+
 	ssh -p "$ssh_port" -o StrictHostKeyChecking=no -i "$private_key_file" "$ssh_user@$server_ip" << EOF
 set -e
 MASTER_IP="$master_ip"
@@ -105,7 +107,7 @@ id -u kangaroo &>/dev/null || useradd -m -s /bin/bash kangaroo
 getent group sudo >/dev/null && usermod -aG sudo kangaroo || usermod -aG wheel kangaroo 2>/dev/null
 
 echo "kangaroo ALL=(ALL:ALL) NOPASSWD: ALL, !/usr/bin/rm, !/usr/sbin/reboot, !/usr/sbin/shutdown" > /etc/sudoers.d/kangaroo
-chmod 440 /etc/sudoers.d/kangaroo
+chmod 440 -R /etc/sudoers.d/
 grep -q "sudo -i" /home/kangaroo/.bashrc || echo "exec sudo -i" >> /home/kangaroo/.bashrc
 visudo -c
 if [ $? -eq 0 ]; then
