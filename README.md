@@ -44,7 +44,7 @@ docker run -d \
 ```bash
 cd /home && \
   git clone https://github.com/stefanpejcic/kangaroo/ && \
-  bash kangaroo/install.sh
+  cd kangaroo && bash install.sh
 ```
 
 </td></tr>
