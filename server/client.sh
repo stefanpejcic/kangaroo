@@ -48,6 +48,9 @@ draw_banner() {
     echo -e "\e[1;34m$line\e[0m"
 }
 
+# TODO: mv
+chmod 775 /var/run/tlog
+
 while true; do
     term_width=$(tput cols)
     col1_w=$(( term_width * 25 / 100 ))
