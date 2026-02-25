@@ -79,7 +79,7 @@ echo "Restricting all users except 'root' to ${SCRIPT_DIR}/server/client.sh"
 
   cat << EOF >> /etc/ssh/sshd_config
 ##### 🦘 Kangaroo SSH JumpServer #####
-#PubkeyAuthentication yes
+PubkeyAuthentication yes
 AuthorizedKeysFile .ssh/authorized_keys
 Match Group jump-users
     ForceCommand tlog-rec-session -c ${SCRIPT_DIR}/server/client.sh
