@@ -29,7 +29,13 @@ done
 
 # Prompts
 [[ -z "$server_name" ]]        && read -p "Server Name: " server_name
-[[ -z "$server_ip" ]]          && read -p "IP Address: "  server_ip
+
+if [[ -z "$server_ip" && -n "$server_name" ]]; then
+    server_ip=$(dig +short A "$server_name" | head -n1)
+fi
+
+[[ -z "$server_ip" ]] && read -p "IP Address: " server_ip
+
 
 if [[ -z "$ssh_user" ]]; then
   read -p "Enter SSH username for the new server: " ssh_user
