@@ -123,6 +123,8 @@ test_ssh_connection() {
 	    if [ $? -ne 0 ]; then
 	        echo "ERROR: SSH authentication failed."
 	        echo "Make sure the key was added correctly."
+			echo "Please try manually with the following command:"
+			echo "ssh -p $ssh_port -o StrictHostKeyChecking=no -i $private_key_file $ssh_user@$server_ip"			
 	        exit 1
 	    fi
 	    echo "SSH key authentication successful."
