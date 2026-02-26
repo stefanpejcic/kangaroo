@@ -157,7 +157,8 @@ id -u kangaroo &>/dev/null || useradd -m -s /bin/bash kangaroo
 getent group sudo >/dev/null && usermod -aG sudo kangaroo || usermod -aG wheel kangaroo 2>/dev/null
 
 echo "kangaroo ALL=(ALL:ALL) NOPASSWD: ALL, !/usr/bin/rm, !/usr/sbin/reboot, !/usr/sbin/shutdown" > /etc/sudoers.d/kangaroo
-chmod 440 -R /etc/sudoers.d/
+chmod 755 /etc/sudoers.d/
+chmod 440 -R /etc/sudoers.d/kangaroo
 grep -q "sudo -i" /home/kangaroo/.bashrc || echo "exec sudo -i" >> /home/kangaroo/.bashrc
 visudo -c
 if [ $? -eq 0 ]; then
