@@ -30,7 +30,7 @@ raw_servers=$(awk '
         print host "|" hostname "|" desc
         host=""; hostname=""; desc=""
     }
-' "$ssh_config")
+' "$ssh_config" | sort -t '|' -k1,1)
 
 if [[ -z "$raw_servers" ]]; then
     echo "No servers configured for your account. Aborting."
