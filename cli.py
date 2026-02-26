@@ -1,7 +1,18 @@
 #!/usr/bin/env python3
 import os
 from collections import defaultdict
+import subprocess
 import click
+import socket
+import pwd
+import grp
+from pathlib import Path
+
+
+if os.geteuid() != 0:
+    click.echo("Run as root")
+    return
+
 
 def parse_ssh_config(path):
     config_map = {}
@@ -264,7 +275,6 @@ def delete_server_all(server):
 
 
 
-import subprocess
 
 @cli.command()
 @click.option('--description', default='', help='Server description')
@@ -275,34 +285,170 @@ import subprocess
 @click.option('--password', default='', help='SSH password')
 @click.option('--users', default='', help='Comma-separated list of users to add server for')
 def add_server(description, name, ip, user, port, password, users):
-    """Add a new server and assign it to users."""
-    script_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'server', 'add_server.sh')
-    
-    if not os.path.isfile(script_path):
-        click.echo(f"Error: Script {script_path} not found.")
-        return
+    """Add a new server and configure SSH access."""
 
-    args = [
-        "bash", script_path,
-        f'--description={description}' if description else '',
-        f'--name={name}',
-        f'--ip={ip}',
-        f'--user={user}',
-        f'--port={port}',
-        f'--password={password}' if password else '',
-        f'--users={users}' if users else '',
-    ]
-    # Filter out empty strings
-    args = [arg for arg in args if arg]
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    config_file = os.path.join(script_dir, "jump_servers.conf")
 
-    try:
-        # Run script with inherited stdin/stdout so user can interact if prompts appear
-        result = subprocess.run(args, check=False)
+    # 1. click already handles validation
+    server_name = name
+    server_ip = ip
+    ssh_user = user or "root"
+    ssh_port = port
+    server_description = description or "none"
+
+    if not server_ip:
+        try:
+            server_ip = socket.gethostbyname(server_name)
+            click.echo(f"Resolved {server_name} -> {server_ip}")
+        except Exception:
+            server_ip = click.prompt("IP Address")
+
+    # 2. pass auth section
+    use_password = True
+    USERPASS = password
+
+    if not USERPASS:
+        click.echo("\nChoose authentication method:")
+        click.echo("1) Provide password")
+        click.echo("2) Manual SSH key installation")
+
+        auth_choice = click.prompt("Select option", type=int)
+
+        if auth_choice == 1:
+            USERPASS = click.prompt("Enter password", hide_input=True)
+            use_password = True
+        elif auth_choice == 2:
+            use_password = False
+        else:
+            click.echo("Invalid option.")
+            return
+
+    # 3. generate SSH key pair
+    private_key = f"/etc/ssh/kangaroo_key_id_rsa"
+    public_key = f"{private_key}.pub"
+
+    if not os.path.exists(private_key):
+        click.echo("Generating SSH key...")
+        subprocess.run([
+            "ssh-keygen", "-t", "rsa", "-b", "4096",
+            "-f", private_key, "-N", ""
+        ], check=True)
+    else:
+        click.echo("Reusing existing SSH key.")
+
+    # 4. copy key to remote
+    if use_password:
+        subprocess.run([
+            "ssh-keygen", "-f", "/root/.ssh/known_hosts",
+            "-R", server_ip
+        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+        copy_cmd = (
+            f"sshpass -p '{USERPASS}' ssh-copy-id "
+            f"-p {ssh_port} -o StrictHostKeyChecking=no "
+            f"-i {public_key} {ssh_user}@{server_ip}"
+        )
+
+        result = subprocess.run(copy_cmd, shell=True)
         if result.returncode != 0:
-            click.echo(f"Script exited with code {result.returncode}")
-    except Exception as e:
-        click.echo(f"Failed to run script: {e}")
+            click.echo("Failed to copy SSH key.")
+            return
+        click.echo("SSH key copied successfully.")
+    else:
+        click.echo("\nAdd this key to remote authorized_keys:\n")
+        with open(public_key) as f:
+            click.echo(f.read())
+        input("Press ENTER when done...")
 
+    # 5. remote provisioning
+    remote_script = f"""
+set -e
+id -u kangaroo &>/dev/null || useradd -m -s /bin/bash kangaroo
+getent group sudo >/dev/null && usermod -aG sudo kangaroo || usermod -aG wheel kangaroo 2>/dev/null
+
+echo "kangaroo ALL=(ALL:ALL) NOPASSWD: ALL, !/usr/bin/rm, !/usr/sbin/reboot, !/usr/sbin/shutdown" > /etc/sudoers.d/kangaroo
+chmod 440 /etc/sudoers.d/kangaroo
+
+mkdir -p /home/kangaroo/.ssh
+cp ~/.ssh/authorized_keys /home/kangaroo/.ssh/authorized_keys
+chown -R kangaroo:kangaroo /home/kangaroo/.ssh
+chmod 700 /home/kangaroo/.ssh
+chmod 600 /home/kangaroo/.ssh/authorized_keys
+
+systemctl restart sshd || systemctl restart ssh
+"""
+
+    subprocess.run([
+        "ssh",
+        "-p", str(ssh_port),
+        "-o", "StrictHostKeyChecking=no",
+        "-i", private_key,
+        f"{ssh_user}@{server_ip}",
+        remote_script
+    ], check=True)
+
+    click.echo("Remote configuration complete.")
+
+    # 6. setup local users SSH config
+    if not users:
+        if click.confirm("Setup SSH for all existing users?"):
+            users = "all"
+        else:
+            users = click.prompt("Enter usernames (comma-separated)")
+
+    if users == "all":
+        system_users = [
+            u.pw_name for u in pwd.getpwall()
+            if u.pw_uid >= 1000 and u.pw_shell.endswith(("bash", "sh", "zsh"))
+            and u.pw_name != "root"
+        ]
+    else:
+        system_users = [u.strip() for u in users.split(",")]
+
+    for username in system_users:
+        try:
+            user_info = pwd.getpwnam(username)
+        except KeyError:
+            click.echo(f"User {username} not found. Skipping.")
+            continue
+
+        home = Path(user_info.pw_dir)
+        ssh_dir = home / ".ssh"
+        ssh_dir.mkdir(mode=0o700, exist_ok=True)
+
+        key_dest = ssh_dir / "kangaroo_key_id_rsa"
+        subprocess.run(["cp", private_key, str(key_dest)])
+        os.chown(key_dest, user_info.pw_uid, user_info.pw_gid)
+        os.chmod(key_dest, 0o600)
+
+        config_file_user = ssh_dir / "config"
+        config_entry = f"""
+# Description: {server_description}
+Host {server_name}
+    HostName {server_ip}
+    User kangaroo
+    Port {ssh_port}
+    IdentityFile ~/.ssh/kangaroo_key_id_rsa
+"""
+
+        with open(config_file_user, "a+") as f:
+            f.write(config_entry)
+
+        os.chown(config_file_user, user_info.pw_uid, user_info.pw_gid)
+        os.chmod(config_file_user, 0o600)
+
+        click.echo(f"Configured SSH for user {username}")
+
+    # 7. Save server to config
+    with open(config_file, "a") as f:
+        f.write(f"{server_name} {server_ip}\n")
+
+    os.chmod(config_file, 0o600)
+
+    click.echo(
+        f"\nServer {server_name} ({server_ip}:{ssh_port}) added successfully 🦘"
+    )
 
 
 
