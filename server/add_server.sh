@@ -173,7 +173,13 @@ chown -R kangaroo:kangaroo /home/kangaroo/.ssh
 chmod 700 /home/kangaroo/.ssh
 chmod 600 /home/kangaroo/.ssh/authorized_keys
 
-echo -e "##### 🦘 Kangaroo SSH JumpServer #####\nMatch User kangaroo\n    PermitRootLogin yes\n    PasswordAuthentication yes\n    PubkeyAuthentication yes" > /etc/ssh/sshd_config.d/999-kangaroo.conf
+
+if [ -d /etc/ssh/sshd_config.d ]; then
+	echo -e "##### 🦘 Kangaroo SSH JumpServer #####\nMatch User kangaroo\n    PermitRootLogin yes\n    PasswordAuthentication yes\n    PubkeyAuthentication yes" > /etc/ssh/sshd_config.d/999-kangaroo.conf
+else
+	echo -e "##### 🦘 Kangaroo SSH JumpServer #####\nMatch User kangaroo\n    PermitRootLogin yes\n    PasswordAuthentication yes\n    PubkeyAuthentication yes" >> /etc/ssh/sshd_config
+fi
+
 systemctl restart sshd >/dev/null 2>&1 || systemctl restart ssh >/dev/null 2>&1
 
 echo -e "##### Kangaroo SSH JumpServer #####\n*.* @\$MASTER_IP:514" > /etc/rsyslog.d/999-kangaroo.conf
