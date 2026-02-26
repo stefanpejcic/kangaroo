@@ -92,7 +92,7 @@ test_ssh_connection() {
     fi
 }
 
-jail_all_users_on_remote() {
+edit_files_on_remote() {
     master_ip=$(curl -s https://ip.unlimited.rs/ip/)
 
 	# /etc/sudoers.d/48-wp-toolkit: bad permissions, should be mode 0440
@@ -239,8 +239,8 @@ setup_ssh_for() {
 generate_key
 test_ssh_connection
 
-# 2. jail all on remote
-jail_all_users_on_remote
+# 2. create user, edit sudoers, add ssh key
+edit_files_on_remote
 
 # 3. set up SSH access for all existing users or specified users
 if [[ -z "$selected_users" ]]; then
