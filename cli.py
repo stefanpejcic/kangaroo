@@ -269,7 +269,7 @@ import subprocess
 @cli.command()
 @click.option('--description', default='', help='Server description')
 @click.option('--name', required=True, help='Server name (e.g., webserver1)')
-@click.option('--ip', required=False, help='Server IP address')
+@click.option('--ip', default='', help='Server IP address')
 @click.option('--user', default='root', help='SSH username for the new server')
 @click.option('--port', default=22, type=int, help='SSH port for the new server')
 @click.option('--password', default='', help='SSH password')
