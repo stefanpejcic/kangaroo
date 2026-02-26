@@ -8,7 +8,7 @@ if ! command -v sshpass >/dev/null 2>&1; then
     echo "sshpass installed successfully."
 fi
 
-
+use_password=true
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_FILE="$SCRIPT_DIR/jump_servers.conf"
 ssh_user="root" #maybe?
@@ -47,11 +47,33 @@ if [[ -z "$server_description" ]]; then
 fi
 
 if [[ -z "$ssh_password" ]]; then
-   echo "Insert password for $ssh_user@$server_ip:$ssh_port"
-   read -r USERPASS
+    echo ""
+    echo "Password is not provided, choose authentication method for $ssh_user@$server_ip:$ssh_port"
+    echo "1) Provide a password now (make sure that password auth is enabled on the server)"
+    echo "2) Generate SSH key and add it manually on remote server"
+    echo ""
+    read -p "Select option [1-2]: " auth_choice
+
+    case "$auth_choice" in
+        1)
+            read -rsp "Enter password: " USERPASS
+            echo ""
+            use_password=true
+            ;;
+        2)
+            use_password=false
+            USERPASS=""
+            ;;
+        *)
+            echo "Invalid option."
+            exit 1
+            ;;
+    esac
 else
-   USERPASS="$ssh_password"
+    USERPASS="$ssh_password"
+    use_password=true
 fi
+
 
 # ======================================================================
 # Functions
@@ -64,7 +86,7 @@ generate_key() {
         ssh-keygen -t rsa -b 4096 -f "$private_key_file" -N ""
     else
         echo "Reusing existing keys pair: $cert_file and $private_key_file"
-    fi	
+    fi
 }
 
 test_ssh_connection() {
@@ -72,24 +94,52 @@ test_ssh_connection() {
 	    csf -a "$server_ip" "$server_name KangarooSSH JumpServer Slave IP" > /dev/null 2>&1
 	fi
 
-    echo "Copying SSH certificate to the new server..."
-	ssh-keygen -f "/root/.ssh/known_hosts" -R "$server_ip" >/dev/null 2>&1
-    output=$(timeout 15s bash -c "echo '$USERPASS' | sshpass ssh-copy-id -p $ssh_port -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -f -i \"$cert_file\" \"$ssh_user@$server_ip\"" 2>&1)
-	status=$?
-
-    if [ $status -ne 0 ]; then
-        if echo "$output" | grep -q "All keys were skipped because they already exist"; then
-            echo "SSH key already exists on remote server. Proceeding..."
-        else
-            echo "Error copying SSH key to remote server."
-            echo "Details: $output"
-            echo "Please try manually with the following command:"
-            echo "sshpass -p '$USERPASS' ssh-copy-id -p $ssh_port -o StrictHostKeyChecking=no -i $cert_file $ssh_user@$server_ip"
-            exit 1
-        fi
-    else
-        echo "SSH key copied successfully."
-    fi
+	if [ "$use_password" = false ]; then
+	    echo ""
+	    echo "============================================================"
+	    echo "ADD THIS PUBLIC KEY TO REMOTE SERVER:"
+	    echo ""
+	    cat "$cert_file"
+	    echo ""
+	    echo "Target:"
+	    echo "    $ssh_user@$server_ip:/$ssh_user/.ssh/authorized_keys"
+	    echo "============================================================"
+	    echo ""
+	
+	    read -p "Press ENTER after you have added the key..."
+	
+	    echo "Testing SSH key authentication..."
+	    timeout 15s ssh -p "$ssh_port" \
+	        -o StrictHostKeyChecking=no \
+	        -i "$private_key_file" \
+	        "$ssh_user@$server_ip" "echo OK" >/dev/null 2>&1
+	
+	    if [ $? -ne 0 ]; then
+	        echo "ERROR: SSH authentication failed."
+	        echo "Make sure the key was added correctly."
+	        exit 1
+	    fi
+	    echo "SSH key authentication successful."
+	else
+	    echo "Copying SSH certificate to the new server..."
+		ssh-keygen -f "/root/.ssh/known_hosts" -R "$server_ip" >/dev/null 2>&1
+	    output=$(timeout 15s bash -c "echo '$USERPASS' | sshpass ssh-copy-id -p $ssh_port -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -f -i \"$cert_file\" \"$ssh_user@$server_ip\"" 2>&1)
+		status=$?
+	
+	    if [ $status -ne 0 ]; then
+	        if echo "$output" | grep -q "All keys were skipped because they already exist"; then
+	            echo "SSH key already exists on remote server. Proceeding..."
+	        else
+	            echo "Error copying SSH key to remote server."
+	            echo "Details: $output"
+	            echo "Please try manually with the following command:"
+	            echo "sshpass -p '$USERPASS' ssh-copy-id -p $ssh_port -o StrictHostKeyChecking=no -i $cert_file $ssh_user@$server_ip"
+	            exit 1
+	        fi
+	    else
+	        echo "SSH key copied successfully."
+	    fi
+	fi
 }
 
 edit_files_on_remote() {
@@ -134,8 +184,6 @@ if command -v csf >/dev/null 2>&1; then
 fi
 
 EOF
-
-
 
     if [ $? -ne 0 ]; then
         echo "FATAL ERROR running commands on remote server."
