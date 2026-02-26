@@ -115,11 +115,7 @@ test_ssh_connection() {
 	    read -p "Press ENTER after you have added the key..."
 	
 	    echo "Testing SSH key authentication..."
-	    timeout 15s ssh -p "$ssh_port" \
-	        -o StrictHostKeyChecking=no \
-	        -i "$private_key_file" \
-	        "$ssh_user@$server_ip" "echo OK" >/dev/null 2>&1
-	
+	    timeout 15s ssh -p "$ssh_port" -o StrictHostKeyChecking=no -i "$private_key_file" "$ssh_user@$server_ip" "echo OK" >/dev/null 2>&1
 	    if [ $? -ne 0 ]; then
 	        echo "ERROR: SSH authentication failed."
 	        echo "Make sure the key was added correctly."
