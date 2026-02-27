@@ -83,18 +83,20 @@ while true; do
             --color="header:bold:blue,prompt:bold:yellow,pointer:bold:red" \
             --prompt="Search Host > ")
 
-    if [[ -z "$selection" ]]; then
-        echo "Exiting..."
-        exit 0
-    fi
+    [[ -z "$selection" ]] && exit 0
     
     server_name=$(echo "$selection" | awk '{print $1}')
+    if ! echo "$raw_servers" | grep -q "^$server_name|"; then
+        echo "Unauthorized server selection."
+        continue
+    fi
+    
     DATE_TIME=$(date '+%Y-%m-%d %H:%M:%S')  
     echo "User: $USER_NAME connected to server: $server_name using IP: $IP_ADDRESS at $DATE_TIME" >> $LOGFILE
 
     # Connect to the selected server
     echo "Connecting to $server_name..."
-    /usr/bin/tlog-rec-session -c "/usr/bin/ssh -o StrictHostKeyChecking=no $server_name"
+    /usr/bin/tlog-rec-session -c "/usr/bin/ssh -o StrictHostKeyChecking=no -a -F $server_name"
     echo -e "\nDisconnected from $server_name. Returning to server selection..."
     DATE_TIME=$(date '+%Y-%m-%d %H:%M:%S')  
     echo "User: $USER_NAME disconnected from server: $server_name using IP: $IP_ADDRESS at $DATE_TIME" >> $LOGFILE
