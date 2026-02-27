@@ -69,6 +69,7 @@ sudo systemctl restart rsyslog
 install_if_missing "tlog-rec-session" "tlog"
 install_if_missing "fzf" "fzf"
 install_if_missing "pip" "python3-pip"
+pip install flask --break-system-packages --ignore-installed
 
 mkdir -p "${SCRIPT_DIR}/server/logs"
 touch "${SCRIPT_DIR}/server/logs/ssh_login.log"
