@@ -81,9 +81,11 @@ if ! grep -q 'Kangaroo SSH JumpServer' /etc/ssh/sshd_config; then
 PubkeyAuthentication yes
 AuthorizedKeysFile .ssh/authorized_keys
 Match Group jump-users
-    ForceCommand /usr/bin/bash ${SCRIPT_DIR}/server/client.sh
+    ForceCommand ${SCRIPT_DIR}/server/client.sh
     AllowTcpForwarding no
     X11Forwarding no
+    PermitTunnel no
+    AllowAgentForwarding no
 EOF
 
     echo "Restarting SSH service.."
