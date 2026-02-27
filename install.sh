@@ -68,6 +68,7 @@ sudo systemctl restart rsyslog
 # Main
 install_if_missing "tlog-rec-session" "tlog"
 install_if_missing "fzf" "fzf"
+install_if_missing "pip" "python3-pip"
 
 mkdir -p "${SCRIPT_DIR}/server/logs"
 touch "${SCRIPT_DIR}/server/logs/ssh_login.log"
