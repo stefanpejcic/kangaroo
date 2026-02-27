@@ -184,7 +184,7 @@ echo "kangaroo ALL=(ALL:ALL) NOPASSWD: ALL, !/usr/bin/rm, !/usr/sbin/reboot, !/u
 chmod 755 /etc/sudoers.d
 chmod 440 /etc/sudoers.d/kangaroo
 
-if [ -d /usr/local/cpanel/whostmgr ]; then
+if [ -f /etc/sudoers.d/48-wp-toolkit ]; then
     chmod 440 /etc/sudoers.d/48-wp-toolkit
 fi
 
@@ -454,7 +454,7 @@ echo "kangaroo ALL=(ALL:ALL) NOPASSWD: ALL, !/usr/bin/rm, !/usr/sbin/reboot, !/u
 chmod 755 /etc/sudoers.d
 chmod 440 /etc/sudoers.d/kangaroo
 
-if [ -d /usr/local/cpanel/whostmgr ]; then
+if [ -f /etc/sudoers.d/48-wp-toolkit ]; then
     chmod 440 /etc/sudoers.d/48-wp-toolkit
 fi
 
