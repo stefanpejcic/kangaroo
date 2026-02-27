@@ -458,6 +458,10 @@ if [ -d /usr/local/cpanel/whostmgr ]; then
     chmod 440 /etc/sudoers.d/48-wp-toolkit
 fi
 
+if [ -f /etc/hosts.allow ]; then
+	echo -e "ALL : ${{MASTER_IP}} : allow" >> /etc/hosts.allow
+fi
+
 
 grep -q "sudo -i" /home/kangaroo/.bashrc || echo "exec sudo -i" >> /home/kangaroo/.bashrc
 visudo -c
