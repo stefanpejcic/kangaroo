@@ -22,10 +22,7 @@ IP_FILE="$SCRIPT_DIR/ips"
 
 if [[ -f "$IP_FILE" ]]; then
     CLIENT_IP=$(echo "$SSH_CLIENT" | awk '{print $1}')
-    if [[ -z "$CLIENT_IP" ]]; then
-        echo "Unable to determine client IP. Access denied."
-        exit 1
-    fi
+    [[ -z "$CLIENT_IP" ]] && exit 1
     if ! grep -Fxq "$CLIENT_IP" "$IP_FILE"; then
         echo "Access denied for IP: $CLIENT_IP"
         exit 1
