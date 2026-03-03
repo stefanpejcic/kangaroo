@@ -147,6 +147,30 @@ View SSH login logs:
 1. Generate ASCII Art, for example from: https://patorjk.com/software/taag/#p=display&f=Star+Wars&t=Kangaroo&x=none&v=4&h=4&w=80&we=false
 2. Save it in file named `logo` in **server** directory
 
+---
+
+### Restrict IP access
+
+To enhance security, limit access to both the SSH service and the `client.sh` script so that only authorized IP addresses can connect.
+
+* **SSH**:
+  Edit `/etc/ssh/sshd_config`. Locate the line:
+  ```
+  Match Group jump-users
+  ```
+  and append the allowed IPs, example full line:
+  ```
+  Match Group jump-users Address 192.168.1.10,203.0.113.5
+  ```
+
+* **Client Script**:
+  Create a file at `server/ips` and list each permitted IP on a separate line:
+  ```
+  192.168.1.10
+  203.0.113.5
+  ```
+
+
 ## Todo
 
 - [ ] [2FA](https://www.digitalocean.com/community/tutorials/how-to-set-up-multi-factor-authentication-for-ssh-on-ubuntu-20-04#step-1-installing-google-s-pam)
