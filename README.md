@@ -145,15 +145,3 @@ To enhance security, limit access to both the SSH service and the `client.sh` sc
   192.168.1.10
   203.0.113.5
   ```
-
-
-## Todo
-
-- [ ] [2FA](https://www.digitalocean.com/community/tutorials/how-to-set-up-multi-factor-authentication-for-ssh-on-ubuntu-20-04#step-1-installing-google-s-pam)
-- [ ] 
-
-## Uninstall
-
-```
-bash kangaroo/uninstall.sh
-```
