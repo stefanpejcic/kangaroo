@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -euo pipefail
+#####set -euo pipefail
 
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 export LANG=en_US.UTF-8
@@ -11,32 +11,35 @@ SCRIPT_ABS_PATH=$(readlink -f "$SCRIPT_PATH")
 SCRIPT_DIR=$(dirname "$SCRIPT_ABS_PATH")
 LOGFILE="$SCRIPT_DIR/logs/ssh_login.log"
 USER_NAME=$(whoami)
-IP_ADDRESS=$(echo $SSH_CONNECTION | awk '{print $1}')
+IP_ADDRESS=$(echo "${SSH_CONNECTION:-127.0.0.1}" | awk '{print $1}')
 DATE_TIME=$(date '+%Y-%m-%d %H:%M:%S')
 echo "User: $USER_NAME connected from IP: $IP_ADDRESS at $DATE_TIME" >> $LOGFILE
 
 trap '' SIGINT SIGTERM SIGTSTP EXIT
 
-
+# 1. if server/ips exists, check client IP
 IP_FILE="$SCRIPT_DIR/ips"
 
 if [[ -f "$IP_FILE" ]]; then
-    CLIENT_IP=$(echo "$SSH_CLIENT" | awk '{print $1}')
-    [[ -z "$CLIENT_IP" ]] && exit 1
-    if ! grep -Fxq "$CLIENT_IP" "$IP_FILE"; then
-        echo "Access denied for IP: $CLIENT_IP"
+    if [[ -z "$IP_ADDRESS" ]]; then
+        echo "Failed to detect client IP address. Contact Administrator."
+        exit 1
+    fi
+    if ! grep -Fxq "$IP_ADDRESS" "$IP_FILE"; then
+        echo "Access denied for IP: $IP_ADDRESS"
         exit 1
     fi
 fi
 
 
+# 2. check if user has a config file
 ssh_config="$HOME/.ssh/config"
-
-if [ ! -f "$ssh_config" ]; then
-    echo "No servers exist. Contact Administrator"
+if [[ ! -f "$ssh_config" ]]; then
+    echo "No servers exist. Contact Administrator."
     exit 1
 fi
 
+# 3. parse the config file
 raw_servers=$(awk '
     /^Host / { host=$2 } 
     /^[[:space:]]*HostName / { hostname=$2 } 
@@ -73,6 +76,7 @@ draw_banner() {
 # TODO: mv
 chmod 775 /var/run/tlog > /dev/null 2>&1
 
+# 4. display menu where user can choose servers
 while true; do
     term_width=$(tput cols)
     col1_w=$(( term_width * 25 / 100 ))
@@ -96,20 +100,19 @@ while true; do
             --color="header:bold:blue,prompt:bold:yellow,pointer:bold:red" \
             --prompt="Search Host > ")
 
+    # 5. validate selection
     [[ -z "$selection" ]] && exit 0
-    
     server_name=$(echo "$selection" | awk '{print $1}')
     if ! echo "$raw_servers" | grep -q "^$server_name|"; then
         echo "Unauthorized server selection."
         continue
     fi
-    
+
+    # 6. log and establish connection
     DATE_TIME=$(date '+%Y-%m-%d %H:%M:%S')  
     echo "User: $USER_NAME connected to server: $server_name using IP: $IP_ADDRESS at $DATE_TIME" >> $LOGFILE
-
-    # Connect to the selected server
     echo "Connecting to $server_name..."
-    /usr/bin/tlog-rec-session -c "/usr/bin/ssh -o StrictHostKeyChecking=no -a -F $server_name"
+    /usr/bin/tlog-rec-session -c "/usr/bin/ssh -o StrictHostKeyChecking=no $server_name"
     echo -e "\nDisconnected from $server_name. Returning to server selection..."
     DATE_TIME=$(date '+%Y-%m-%d %H:%M:%S')  
     echo "User: $USER_NAME disconnected from server: $server_name using IP: $IP_ADDRESS at $DATE_TIME" >> $LOGFILE
