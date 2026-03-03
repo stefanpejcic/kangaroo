@@ -19,37 +19,13 @@ that's it! Users now simply SSH into the **Master**, where they are greeted by t
 
 ## Install
 
+Tested on Ubuntu 24.04
 
-<table>
-  <tr>
-    <th>Docker</th>
-    <th>Standalone (Ubuntu 24)</th>
-  </tr>
-  <tr>
-    <td>
-      
-```bash
-docker run -d \
-  --name kangaroo \
-  -p 2222:22 \
-  -p 514:514/udp \
-  -p 514:514/tcp \
-  -v kangaroo_logs:/var/log/remote \
-  kangaroo:latest
-```
-
-</td>
-<td>
-  
 ```bash
 cd /home && \
   git clone https://github.com/stefanpejcic/kangaroo/ && \
   cd kangaroo && bash install.sh
 ```
-
-</td></tr>
-</table>
-
 
 ---
 
