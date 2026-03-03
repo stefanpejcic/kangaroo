@@ -454,10 +454,17 @@ echo "kangaroo ALL=(ALL:ALL) NOPASSWD: ALL, !/usr/bin/rm, !/usr/sbin/reboot, !/u
 chmod 755 /etc/sudoers.d
 chmod 440 /etc/sudoers.d/kangaroo
 
+# cpanel
 if [ -f /etc/sudoers.d/48-wp-toolkit ]; then
     chmod 440 /etc/sudoers.d/48-wp-toolkit
 fi
 
+# ispmanager
+if [ -e /usr/local/mgr5/sbin/mgrctl ]; then
+    /usr/local/mgr5/sbin/mgrctl -m ispmgr firewall.edit name=allow_$MASTER_IP action=allow port=0:65535 proto=any src_ip=$MASTER_IP sok=ok
+fi
+
+# legacy
 if [ -f /etc/hosts.allow ]; then
 	echo -e "ALL : ${{MASTER_IP}} : allow" >> /etc/hosts.allow
 fi
