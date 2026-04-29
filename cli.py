@@ -393,6 +393,19 @@ def build_flask_app(master_port: int) -> "Flask":  # noqa: F821  (type hint only
         if not name or not ip:
             return jsonify({"error": "hostname and ip are required"}), 400
 
+		# prevent duplicates
+        if SERVERS_CONF.exists():
+            with open(SERVERS_CONF) as f:
+                for line in f:
+                    parts = line.strip().split()
+                    if len(parts) < 2:
+                        continue
+                    existing_name, existing_ip = parts[0], parts[1]
+                    if existing_name == name:
+                        return jsonify({"error": f"Server '{name}' already registered"}), 409
+                    if existing_ip == ip:
+                        return jsonify({"error": f"IP '{ip}' already registered under '{existing_name}'"}), 409
+
         private_key = ensure_kangaroo_key()
         target_users = "stefan,radovan,duka,filip,lazar,nikola,petar"
         users = [u.strip() for u in target_users.split(",")] #all_system_users()
