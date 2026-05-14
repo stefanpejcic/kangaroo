@@ -62,6 +62,33 @@ sudo systemctl restart rsyslog
 
 
 
+cat << EOF >> /etc/systemd/system/kangaroo.service
+[Unit]
+Description=Kangaroo SSH JumpServer Master API 🦘
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 $SCRIPT_DIR/cli.py master-api --host 0.0.0.0 --port 7437
+WorkingDirectory=/opt/kangaroo
+Restart=on-failure
+RestartSec=5
+
+User=root
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=kangaroo
+
+NoNewPrivileges=no
+PrivateTmp=yes
+ProtectHome=no
+ProtectSystem=no
+
+[Install]
+WantedBy=multi-user.target
+EOF
 
 
 # ======================================================================
