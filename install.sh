@@ -60,9 +60,8 @@ sudo systemctl restart rsyslog
 }
 
 
-
-
-cat << EOF >> /etc/systemd/system/kangaroo.service
+start_service() {
+    cat << EOF >> /etc/systemd/system/kangaroo.service
 [Unit]
 Description=Kangaroo SSH JumpServer Master API 🦘
 After=network.target
@@ -89,7 +88,13 @@ ProtectSystem=no
 [Install]
 WantedBy=multi-user.target
 EOF
+    
+    systemctl daemon-reload
+    systemctl enable --now kangaroo
+    systemctl status kangaroo
 
+
+}
 
 # ======================================================================
 # Main
@@ -121,6 +126,9 @@ EOF
     echo "Restarting SSH service.."
     sudo systemctl restart ssh
 fi
+
+# start master api listener
+start_service 
 
 # group existing users
 echo "Adding all exisitng users to jump-users group.."
