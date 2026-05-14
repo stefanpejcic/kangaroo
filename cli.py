@@ -172,7 +172,7 @@ def append_host_block(config_path: Path, uid: int, gid: int, entry: str) -> None
 
 
 # ---------------------------------------------------------------------------
-# Remote provisioning helpers  (kept from original)
+# Remote provisioning helpers
 # ---------------------------------------------------------------------------
 
 REMOTE_PROVISION_SCRIPT = """\
