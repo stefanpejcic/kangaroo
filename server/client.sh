@@ -21,10 +21,7 @@ trap '' SIGINT SIGTERM SIGTSTP EXIT
 IP_FILE="$SCRIPT_DIR/ips"
 
 if [[ -f "$IP_FILE" ]]; then
-    if [[ -z "$IP_ADDRESS" ]]; then
-        echo "Failed to detect client IP address. Contact Administrator."
-        exit 1
-    fi
+    [[ -z "$IP_ADDRESS" ]] && { echo "Failed to detect client IP address. Contact Administrator."; exit 1; }
     if ! grep -Fxq "$IP_ADDRESS" "$IP_FILE"; then
         echo "Access denied for IP: $IP_ADDRESS"
         exit 1
@@ -34,10 +31,7 @@ fi
 
 # 2. check if user has a config file
 ssh_config="$HOME/.ssh/config"
-if [[ ! -f "$ssh_config" ]]; then
-    echo "No servers exist. Contact Administrator."
-    exit 1
-fi
+[[ -f "$ssh_config" ]] || { echo "No servers exist. Contact Administrator."; exit 1; }
 
 # 3. parse the config file
 raw_servers=$(awk '
