@@ -47,6 +47,10 @@ for IP in "${ALLOWED[@]}"; do
   iptables -A INPUT -s "$IP" -j ACCEPT
 done
 
+### api port
+# hardcoded from https://github.com/stefanpejcic/kangaroo/blob/c3fe59a03da6111ad84e2cb4332432e019dd58c5/cli.py#L26
+iptables -A INPUT -p tcp --dport 7437 -j ACCEPT
+
 ### Persist
 if command -v netfilter-persistent &>/dev/null; then
   netfilter-persistent save
