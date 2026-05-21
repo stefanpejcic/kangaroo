@@ -144,6 +144,12 @@ awk -F: '$3 >= 1000 && $1 != "nobody" {print $1}' /etc/passwd | xargs -I {} user
 
 log_collector
 
+if [[ -f "$IP_FILE" ]]; then
+    echo "Restricting access only to IP addresses from the $IP_FILE file:"
+    cat $IP_FILE
+    bash "$SCRIPT_DIR/HARDENED.sh"
+fi
+
 echo "🦘 Kangaroo SSH JumpServer is installed! - please execute 'source ~/.bashrc'"
 echo
 echo "" 
