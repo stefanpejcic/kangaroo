@@ -27,6 +27,8 @@ cd /home && \
   cd kangaroo && bash install.sh
 ```
 
+> Optional: create a `server/ips` file before running the installation script. Add the allowed IP addresses to this file, one per line. During installation, the script will restrict SSH access to these IPs and also apply corresponding iptables rules to limit network access accordingly.
+
 ---
 
 ## Usage
