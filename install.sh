@@ -108,13 +108,20 @@ touch "${SCRIPT_DIR}/server/logs/ssh_login.log"
 chmod 666 "${SCRIPT_DIR}/server/logs/ssh_login.log"
 chmod 775 /var/run/tlog
 
+
+
+IP_FILE="$SCRIPT_DIR/server/ips"
+if [[ -f "$IP_FILE" ]]; then
+    IPS=$(grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' "$IP_FILE" | paste -sd "," -)
+fi
+
 if ! grep -q 'Kangaroo SSH JumpServer' /etc/ssh/sshd_config; then
     echo "Restricting 'jump-users' group to ${SCRIPT_DIR}/server/client.sh"
     cat << EOF >> /etc/ssh/sshd_config
 ##### 🦘 Kangaroo SSH JumpServer #####
 PubkeyAuthentication yes
 AuthorizedKeysFile .ssh/authorized_keys
-Match Group jump-users
+Match Group jump-users${IPS:+ Address $IPS}
     ExposeAuthInfo yes
     ForceCommand ${SCRIPT_DIR}/server/client.sh
     AllowTcpForwarding no
