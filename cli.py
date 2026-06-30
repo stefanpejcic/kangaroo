@@ -54,6 +54,8 @@ KANGAROO_KEY = Path("/etc/ssh/kangaroo_key_id_rsa")
 SERVERS_CONF = SCRIPT_DIR / "jump_servers.conf"
 TOKEN_FILE = SCRIPT_DIR / ".kangaroo_token"
 MASTER_PORT_FILE = SCRIPT_DIR / ".kangaroo_master_port"
+KANGAROO_TLS_KEY  = Path("/etc/ssh/kangaroo_tls_key.pem")
+KANGAROO_TLS_CERT = Path("/etc/ssh/kangaroo_tls_cert.pem")
 
 DEFAULT_MASTER_PORT = 7437
 
@@ -259,6 +261,46 @@ def ensure_kangaroo_key() -> Path:
     return KANGAROO_KEY
 
 
+def ensure_tls_cert() -> tuple[Path, Path]:
+    """Generate a persistent self-signed TLS certificate/key pair if they do not exist."""
+    if not KANGAROO_TLS_KEY.exists() or not KANGAROO_TLS_CERT.exists():
+        click.echo("Generating TLS certificate...")
+        subprocess.run(
+            [
+                "openssl", "req", "-x509", "-newkey", "rsa:2048",
+                "-keyout", str(KANGAROO_TLS_KEY),
+                "-out",    str(KANGAROO_TLS_CERT),
+                "-days",   "3650",
+                "-nodes",
+                "-subj",   "/CN=kangaroo-master",
+            ],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        os.chmod(KANGAROO_TLS_KEY,  0o600)
+        os.chmod(KANGAROO_TLS_CERT, 0o644)
+    return KANGAROO_TLS_KEY, KANGAROO_TLS_CERT
+
+
+def get_cert_pin(cert_path: Path) -> str:
+    """Return the SHA-256 SPKI fingerprint (base64) for curl --pinnedpubkey."""
+    import hashlib
+    import base64
+
+    pubkey_pem = subprocess.run(
+        ["openssl", "x509", "-in", str(cert_path), "-pubkey", "-noout"],
+        capture_output=True, check=True, text=True,
+    ).stdout
+
+    der_bytes = subprocess.run(
+        ["openssl", "pkey", "-pubin", "-outform", "DER"],
+        input=pubkey_pem, capture_output=True, check=True,
+    ).stdout
+
+    return base64.b64encode(hashlib.sha256(der_bytes).digest()).decode()
+
+
 def copy_key_to_remote(password: str, ssh_user: str, server_ip: str, port: int, public_key: Path) -> bool:
     subprocess.run(
         ["ssh-keygen", "-f", "/root/.ssh/known_hosts", "-R", server_ip],
@@ -266,7 +308,7 @@ def copy_key_to_remote(password: str, ssh_user: str, server_ip: str, port: int, 
         stderr=subprocess.DEVNULL,
     )
 
-	result = subprocess.run(
+    result = subprocess.run(
         [
             "sshpass", "-p", password,
             "ssh-copy-id",
@@ -379,7 +421,7 @@ def all_system_users() -> list[str]:
 # Flask application (lazy import)
 # ---------------------------------------------------------------------------
 
-def build_flask_app(master_port: int, configured_master_ip: str = "") -> "Flask":  # noqa: F821
+def build_flask_app(master_port: int, configured_master_ip: str = "", cert_pin: str = "") -> "Flask":  # noqa: F821
     from flask import Flask, jsonify, request, send_file, abort
     import io
     import tempfile
@@ -421,7 +463,7 @@ def build_flask_app(master_port: int, configured_master_ip: str = "") -> "Flask"
                     )
                 }), 500
 
-        slave_script = _build_slave_script(master_ip, master_port, expected_token)
+        slave_script = _build_slave_script(master_ip, master_port, expected_token, cert_pin)
         buf = io.BytesIO(slave_script.encode())
         buf.seek(0)
         return send_file(
@@ -449,7 +491,10 @@ def build_flask_app(master_port: int, configured_master_ip: str = "") -> "Flask"
         except ValueError as exc:
             return jsonify({"error": str(exc)}), 400
 
-        ssh_port = int(data.get("ssh_port", 22))
+        try:
+            ssh_port = int(data.get("ssh_port", 22))
+        except (ValueError, TypeError):
+            return jsonify({"error": "ssh_port must be an integer"}), 400
         if not (1 <= ssh_port <= 65535):
             return jsonify({"error": "ssh_port out of range"}), 400
 
@@ -484,7 +529,7 @@ def build_flask_app(master_port: int, configured_master_ip: str = "") -> "Flask"
     return app
 
 
-def _build_slave_script(master_ip: str, master_port: int, token: str) -> str:
+def _build_slave_script(master_ip: str, master_port: int, token: str, cert_pin: str) -> str:
     """Generate the bash script that runs on the slave to self-register."""
     return f"""\
 #!/usr/bin/env bash
@@ -515,7 +560,7 @@ echo "SSH port : $SSH_PORT"
 # ----------------------------------------------------------------
 echo "Fetching master public key..."
 mkdir -p ~/.ssh
-curl -fsSL "http://${{MASTER_IP}}:${{MASTER_PORT}}/key?token=${{TOKEN}}" >> ~/.ssh/authorized_keys
+curl -fsSL --pinnedpubkey "sha256//{cert_pin}" "https://${{MASTER_IP}}:${{MASTER_PORT}}/key?token=${{TOKEN}}" >> ~/.ssh/authorized_keys
 sort -u ~/.ssh/authorized_keys -o ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/authorized_keys
 echo "Public key added."
@@ -580,10 +625,10 @@ echo "kangaroo user provisioned."
 # 4. Notify master
 # ----------------------------------------------------------------
 echo "Notifying master..."
-curl -fsSL -X POST \\
+curl -fsSL --pinnedpubkey "sha256//{cert_pin}" -X POST \\
      -H "Content-Type: application/json" \\
      -d "{{\\\"token\\\":\\\"$TOKEN\\\",\\\"hostname\\\":\\\"$HOSTNAME_VAL\\\",\\\"description\\\":\\\"$HOSTNAME_VAL\\\",\\\"ip\\\":\\\"$IP_VAL\\\",\\\"ssh_port\\\":$SSH_PORT}}" \\
-     "http://${{MASTER_IP}}:${{MASTER_PORT}}/connect"
+     "https://${{MASTER_IP}}:${{MASTER_PORT}}/connect"
 
 echo ""
 echo "=== Done! This server has been registered with the Kangaroo master. ==="
@@ -832,6 +877,8 @@ def cmd_connect(port: int, ip: str) -> None:
     """Show the one-liner command to run on a slave to self-register with this master."""
     ensure_kangaroo_key()
     token = get_or_create_token()
+    ensure_tls_cert()
+    cert_pin = get_cert_pin(KANGAROO_TLS_CERT)
 
     if not is_port_open("127.0.0.1", port):
         click.echo("🦘 Master API not running. Starting in background...")
@@ -852,7 +899,8 @@ def cmd_connect(port: int, ip: str) -> None:
     click.echo("\n🦘 Kangaroo — Slave Registration\n")
     click.echo("Run this command on the slave machine:\n")
     click.echo(
-        f"  curl -fsSL http://{ip}:{port}/download?token={token} | bash\n"
+        f"  curl -fsSL --pinnedpubkey 'sha256//{cert_pin}' "
+        f"'https://{ip}:{port}/download?token={token}' | bash\n"
     )
 
 
@@ -879,16 +927,24 @@ def cmd_master_api(port: int, host: str, master_ip: str) -> None:
 
     ensure_kangaroo_key()
     token = get_or_create_token()
+    tls_key, tls_cert = ensure_tls_cert()
+    cert_pin = get_cert_pin(tls_cert)
 
-    click.echo(f"\n🦘 Kangaroo Master API starting on {host}:{port}")
-    click.echo(f"   Token : {token}")
+    click.echo(f"\n🦘 Kangaroo Master API starting on {host}:{port} (HTTPS)")
+    click.echo(f"   Token    : {token}")
+    click.echo(f"   TLS cert : {tls_cert}")
+    click.echo(f"   SPKI pin : sha256//{cert_pin}")
     click.echo(f"   Endpoints:")
     click.echo(f"     GET  /key       — public key (token required)")
     click.echo(f"     GET  /download  — slave setup script (token required)")
     click.echo(f"     POST /connect   — slave registration (token required)\n")
 
-    app = build_flask_app(port, master_ip)
-    app.run(host=host, port=port, debug=False)
+    import ssl as _ssl
+    ssl_ctx = _ssl.SSLContext(_ssl.PROTOCOL_TLS_SERVER)
+    ssl_ctx.load_cert_chain(str(tls_cert), str(tls_key))
+
+    app = build_flask_app(port, master_ip, cert_pin)
+    app.run(host=host, port=port, debug=False, ssl_context=ssl_ctx)
 
 
 # ---------------------------------------------------------- login-logs
