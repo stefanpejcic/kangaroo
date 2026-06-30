@@ -69,7 +69,7 @@ Wants=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 $SCRIPT_DIR/cli.py master-api --host 0.0.0.0 --port 7437
+ExecStart=/usr/bin/python3 $SCRIPT_DIR/cli.py master-api --host 0.0.0.0 --port 7437 --master-ip $(hostname -I | awk '{print $1}')
 WorkingDirectory=/opt/kangaroo
 Restart=on-failure
 RestartSec=5
