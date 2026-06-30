@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Kangaroo SSH JumpServer 🦘 - manages SSH configs across system users."""
 
+import ipaddress
 import os
+import re
 import sys
 import pwd
 import secrets
@@ -12,6 +14,36 @@ from collections import defaultdict
 from pathlib import Path
 
 import click
+
+_SAFE_HOST_ALIAS_RE = re.compile(r'^[A-Za-z0-9][A-Za-z0-9._-]{0,62}$')
+
+
+def _validate_hostname(value: str) -> str:
+    """Reject strings that could inject directives into an SSH config Host line."""
+    if not _SAFE_HOST_ALIAS_RE.match(value):
+        raise ValueError(
+            f"hostname '{value}' must contain only alphanumerics, dots, hyphens, "
+            "and underscores (max 63 chars)"
+        )
+    return value
+
+
+def _validate_ip(value: str) -> str:
+    """Ensure value is a syntactically valid IP address (IPv4 or IPv6)."""
+    try:
+        ipaddress.ip_address(value)
+        return value
+    except ValueError:
+        raise ValueError(f"'{value}' is not a valid IP address")
+
+
+def _validate_text_field(value: str, field: str, max_len: int = 255) -> str:
+    """Reject values containing newlines, carriage returns, or null bytes."""
+    if len(value) > max_len:
+        raise ValueError(f"{field} exceeds {max_len} characters")
+    if any(c in value for c in ("\n", "\r", "\x00")):
+        raise ValueError(f"{field} contains disallowed control characters")
+    return value
 
 # ---------------------------------------------------------------------------
 # Constants / paths
@@ -233,12 +265,17 @@ def copy_key_to_remote(password: str, ssh_user: str, server_ip: str, port: int, 
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
-    cmd = (
-        f"sshpass -p '{password}' ssh-copy-id "
-        f"-p {port} -o StrictHostKeyChecking=no "
-        f"-i {public_key} {ssh_user}@{server_ip}"
+
+	result = subprocess.run(
+        [
+            "sshpass", "-p", password,
+            "ssh-copy-id",
+            "-p", str(port),
+            "-o", "StrictHostKeyChecking=no",
+            "-i", str(public_key),
+            f"{ssh_user}@{server_ip}",
+        ]
     )
-    result = subprocess.run(cmd, shell=True)
     return result.returncode == 0
 
 
@@ -287,8 +324,12 @@ def configure_users_for_server(
     private_key: Path,
 ) -> None:
     """Write SSH config entries for each local user and copy the kangaroo key."""
+    name = _validate_hostname(name)
+    ip = _validate_ip(ip)
+    description = _validate_text_field(description or "none", "description")
+
     config_entry = (
-        f"\n# Description: {description or 'none'}\n"
+        f"\n# Description: {description}\n"
         f"Host {name}\n"
         f"    HostName {ip}\n"
         f"    User kangaroo\n"
@@ -338,7 +379,7 @@ def all_system_users() -> list[str]:
 # Flask application (lazy import)
 # ---------------------------------------------------------------------------
 
-def build_flask_app(master_port: int) -> "Flask":  # noqa: F821  (type hint only)
+def build_flask_app(master_port: int, configured_master_ip: str = "") -> "Flask":  # noqa: F821
     from flask import Flask, jsonify, request, send_file, abort
     import io
     import tempfile
@@ -348,6 +389,10 @@ def build_flask_app(master_port: int) -> "Flask":  # noqa: F821  (type hint only
     # ------------------------------------------------------------------ /key
     @app.route("/key")
     def route_key():
+        expected_token = get_or_create_token()
+        provided_token = request.args.get("token", "")
+        if not secrets.compare_digest(provided_token, expected_token):
+            abort(403)
         pub = Path(f"{KANGAROO_KEY}.pub")
         if not pub.is_file():
             return jsonify({"error": "Key not generated yet. Run: kangaroo add-server first."}), 404
@@ -358,11 +403,23 @@ def build_flask_app(master_port: int) -> "Flask":  # noqa: F821  (type hint only
     def route_download():
         """Return the slave bootstrap script as a downloadable file."""
         expected_token = get_or_create_token()
-        provided_token = request.args.get("token")
-        if not provided_token or provided_token != expected_token:
+        provided_token = request.args.get("token", "")
+        if not secrets.compare_digest(provided_token, expected_token):
             abort(403)  # Forbidden
 
-        master_ip = request.host.split(":")[0]
+        if configured_master_ip:
+            master_ip = configured_master_ip
+        else:
+            raw_host = request.host.split(":")[0]
+            try:
+                master_ip = _validate_ip(raw_host)
+            except ValueError:
+                return jsonify({
+                    "error": (
+                        f"Host header '{raw_host}' is not a valid IP address. "
+                        "Start the API with --master-ip <IP> to set it explicitly."
+                    )
+                }), 500
 
         slave_script = _build_slave_script(master_ip, master_port, expected_token)
         buf = io.BytesIO(slave_script.encode())
@@ -382,13 +439,19 @@ def build_flask_app(master_port: int) -> "Flask":  # noqa: F821  (type hint only
 
         # Token validation
         token = get_or_create_token()
-        if data.get("token") != token:
+        if not secrets.compare_digest(data.get("token", ""), token):
             return jsonify({"error": "Invalid token"}), 403
 
-        name = data.get("hostname", "").strip()
-        ip = data.get("ip", "").strip()
+        try:
+            name = _validate_hostname(data.get("hostname", "").strip())
+            ip = _validate_ip(data.get("ip", "").strip())
+            description = _validate_text_field(data.get("description", ""), "description")
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
+
         ssh_port = int(data.get("ssh_port", 22))
-        description = data.get("description", "")
+        if not (1 <= ssh_port <= 65535):
+            return jsonify({"error": "ssh_port out of range"}), 400
 
         if not name or not ip:
             return jsonify({"error": "hostname and ip are required"}), 400
@@ -452,7 +515,7 @@ echo "SSH port : $SSH_PORT"
 # ----------------------------------------------------------------
 echo "Fetching master public key..."
 mkdir -p ~/.ssh
-curl -fsSL "http://${{MASTER_IP}}:${{MASTER_PORT}}/key" >> ~/.ssh/authorized_keys
+curl -fsSL "http://${{MASTER_IP}}:${{MASTER_PORT}}/key?token=${{TOKEN}}" >> ~/.ssh/authorized_keys
 sort -u ~/.ssh/authorized_keys -o ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/authorized_keys
 echo "Public key added."
@@ -798,7 +861,8 @@ def cmd_connect(port: int, ip: str) -> None:
 @cli.command("master-api")
 @click.option("--port", default=DEFAULT_MASTER_PORT, show_default=True, help="Port to listen on")
 @click.option("--host", default="0.0.0.0", show_default=True, help="Bind address")
-def cmd_master_api(port: int, host: str) -> None:
+@click.option("--master-ip", "master_ip", default="", help="Public IP to embed in slave scripts")
+def cmd_master_api(port: int, host: str, master_ip: str) -> None:
     """Start the master HTTP API (key distribution + slave registration)."""
     try:
         from flask import Flask  # noqa: F401
@@ -806,17 +870,24 @@ def cmd_master_api(port: int, host: str) -> None:
         click.echo("Flask is required: pip install flask", err=True)
         raise SystemExit(1)
 
+    if master_ip:
+        try:
+            master_ip = _validate_ip(master_ip)
+        except ValueError as exc:
+            click.echo(f"Invalid --master-ip: {exc}", err=True)
+            raise SystemExit(1)
+
     ensure_kangaroo_key()
     token = get_or_create_token()
 
     click.echo(f"\n🦘 Kangaroo Master API starting on {host}:{port}")
     click.echo(f"   Token : {token}")
     click.echo(f"   Endpoints:")
-    click.echo(f"     GET  /key       — public key")
-    click.echo(f"     GET  /download  — slave setup script")
-    click.echo(f"     POST /connect   — slave registration\n")
+    click.echo(f"     GET  /key       — public key (token required)")
+    click.echo(f"     GET  /download  — slave setup script (token required)")
+    click.echo(f"     POST /connect   — slave registration (token required)\n")
 
-    app = build_flask_app(port)
+    app = build_flask_app(port, master_ip)
     app.run(host=host, port=port, debug=False)
 
 
