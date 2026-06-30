@@ -97,7 +97,12 @@ while true; do
     # 5. validate selection
     [[ -z "$selection" ]] && exit 0
     server_name=$(echo "$selection" | awk '{print $1}')
-    if ! echo "$raw_servers" | grep -q "^$server_name|"; then
+    if ! [[ "$server_name" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]{0,62}$ ]]; then
+        echo "Invalid server name."
+        continue
+    fi
+
+    if ! echo "$raw_servers" | grep -qF "${server_name}|"; then
         echo "Unauthorized server selection."
         continue
     fi
@@ -106,7 +111,8 @@ while true; do
     DATE_TIME=$(date '+%Y-%m-%d %H:%M:%S')  
     echo "User: $USER_NAME connected to server: $server_name using IP: $IP_ADDRESS at $DATE_TIME" >> $LOGFILE
     echo "Connecting to $server_name..."
-    /usr/bin/tlog-rec-session -c "/usr/bin/ssh -t -t -o StrictHostKeyChecking=accept-new $server_name"
+    server_name_q=$(printf '%q' "$server_name")
+    /usr/bin/tlog-rec-session -c "/usr/bin/ssh -t -t -o StrictHostKeyChecking=accept-new $server_name_q"
     echo -e "\nDisconnected from $server_name. Returning to server selection..."
     DATE_TIME=$(date '+%Y-%m-%d %H:%M:%S')  
     echo "User: $USER_NAME disconnected from server: $server_name using IP: $IP_ADDRESS at $DATE_TIME" >> $LOGFILE
