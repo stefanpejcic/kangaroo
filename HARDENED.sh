@@ -47,9 +47,11 @@ for IP in "${ALLOWED[@]}"; do
   iptables -A INPUT -s "$IP" -j ACCEPT
 done
 
-### api port
+### api port: restrict to the same IP allowlist
 # hardcoded from https://github.com/stefanpejcic/kangaroo/blob/c3fe59a03da6111ad84e2cb4332432e019dd58c5/cli.py#L26
-iptables -A INPUT -p tcp --dport 7437 -j ACCEPT
+for IP in "${ALLOWED[@]}"; do
+  iptables -A INPUT -s "$IP" -p tcp --dport 7437 -j ACCEPT
+done
 
 ### Persist
 if command -v netfilter-persistent &>/dev/null; then
